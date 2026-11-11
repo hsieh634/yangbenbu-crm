@@ -7,7 +7,11 @@
 ## 文件
 
 - [01 技術選型研究與架構建議](docs/01-技術選型研究.md)
+- [02 功能規劃與系統架構](docs/02-功能規劃與系統架構.md)
 
 ## 技術棧（規劃）
 
-Next.js（TypeScript）· PostgreSQL · Prisma · Tailwind CSS · LINE LIFF／Messaging API · FHIR R4（TW Core IG）對應層
+- 前端：Next.js · React · Tailwind CSS · shadcn/ui · TanStack Query · LINE LIFF
+- 後端：NestJS · Prisma · PostgreSQL · pg-boss · LINE Messaging API
+- 標準：FHIR R4（TW Core IG）對應層
+- 工具：pnpm + Turborepo monorepo · Docker Compose · GitHub Actions
