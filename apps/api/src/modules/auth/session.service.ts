@@ -61,7 +61,10 @@ export class SessionService {
       return null;
     }
     if (now - session.lastSeenAt.getTime() > TOUCH_INTERVAL_MS) {
-      await this.prisma.session.update({ where: { id: session.id }, data: { lastSeenAt: new Date(now) } });
+      await this.prisma.session.update({
+        where: { id: session.id },
+        data: { lastSeenAt: new Date(now) },
+      });
     }
     return session;
   }

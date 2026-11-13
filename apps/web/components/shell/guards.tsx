@@ -7,7 +7,13 @@ import { Card } from '@/components/ui/card';
 import { useCan } from '@/lib/auth';
 
 /** 頁面層級的權限檢查（後端仍會再檢查一次，這裡只是避免顯示無法使用的畫面） */
-export function RequirePermission({ permission, children }: { permission: Permission; children: ReactNode }) {
+export function RequirePermission({
+  permission,
+  children,
+}: {
+  permission: Permission;
+  children: ReactNode;
+}) {
   const can = useCan();
   if (!can(permission)) {
     return (
@@ -21,7 +27,15 @@ export function RequirePermission({ permission, children }: { permission: Permis
   return <>{children}</>;
 }
 
-export function ComingSoon({ title, phase, items }: { title: string; phase: number; items: string[] }) {
+export function ComingSoon({
+  title,
+  phase,
+  items,
+}: {
+  title: string;
+  phase: number;
+  items: string[];
+}) {
   return (
     <div>
       <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>

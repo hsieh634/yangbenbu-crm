@@ -4,7 +4,13 @@ import { cn } from '@/lib/utils';
 
 export function Alert({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div role="alert" className={cn('flex items-start gap-2 rounded-lg bg-danger-soft px-3 py-2.5 text-sm text-danger', className)}>
+    <div
+      role="alert"
+      className={cn(
+        'flex items-start gap-2 rounded-lg bg-danger-soft px-3 py-2.5 text-sm text-danger',
+        className,
+      )}
+    >
       <AlertCircle className="mt-0.5 size-4 shrink-0" />
       <div>{children}</div>
     </div>
@@ -24,7 +30,15 @@ export function EmptyState({ title, children }: { title: string; children?: Reac
   );
 }
 
-export function PageHeader({ title, description, actions }: { title: string; description?: ReactNode; actions?: ReactNode }) {
+export function PageHeader({
+  title,
+  description,
+  actions,
+}: {
+  title: string;
+  description?: ReactNode;
+  actions?: ReactNode;
+}) {
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>

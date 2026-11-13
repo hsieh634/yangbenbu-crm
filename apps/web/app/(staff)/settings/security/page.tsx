@@ -18,8 +18,13 @@ function MfaSetup() {
 
   const start = useMutation({
     mutationFn: async () => {
-      const r = await api<{ secret: string; otpauthUri: string }>('/auth/mfa/setup', { method: 'POST' });
-      return { secret: r.secret, qr: await QRCode.toDataURL(r.otpauthUri, { margin: 1, width: 200 }) };
+      const r = await api<{ secret: string; otpauthUri: string }>('/auth/mfa/setup', {
+        method: 'POST',
+      });
+      return {
+        secret: r.secret,
+        qr: await QRCode.toDataURL(r.otpauthUri, { margin: 1, width: 200 }),
+      };
     },
     onSuccess: setSetup,
   });
@@ -33,7 +38,8 @@ function MfaSetup() {
     return (
       <div className="space-y-4">
         <p className="text-sm text-ink-muted">
-          啟用後，每次登入除了密碼，還需要輸入手機驗證器 App 產生的 6 位數驗證碼。即使密碼外洩，他人也無法登入。
+          啟用後，每次登入除了密碼，還需要輸入手機驗證器 App 產生的 6
+          位數驗證碼。即使密碼外洩，他人也無法登入。
         </p>
         {start.error && <Alert>{start.error.message}</Alert>}
         <Button onClick={() => start.mutate()} disabled={start.isPending}>
@@ -46,14 +52,19 @@ function MfaSetup() {
   return (
     <div className="grid gap-6 sm:grid-cols-[auto_1fr]">
       {/* eslint-disable-next-line @next/next/no-img-element -- data URL，不需要最佳化 */}
-      <img src={setup.qr} alt="兩步驟驗證 QR Code" className="size-48 rounded-lg border border-line" />
+      <img
+        src={setup.qr}
+        alt="兩步驟驗證 QR Code"
+        className="size-48 rounded-lg border border-line"
+      />
       <div className="space-y-4">
         <ol className="list-decimal space-y-1.5 pl-5 text-sm text-ink-muted">
           <li>以 Google Authenticator 或 Microsoft Authenticator 掃描 QR Code</li>
           <li>輸入 App 顯示的 6 位數驗證碼完成啟用</li>
         </ol>
         <p className="text-xs text-ink-muted">
-          無法掃描？手動輸入金鑰：<code className="break-all rounded bg-paper px-1 py-0.5">{setup.secret}</code>
+          無法掃描？手動輸入金鑰：
+          <code className="break-all rounded bg-paper px-1 py-0.5">{setup.secret}</code>
         </p>
         <form
           onSubmit={(e) => {
@@ -92,7 +103,9 @@ export default function SecurityPage() {
     <>
       <PageHeader title="帳號安全" />
       {me.mfaEnrollmentRequired && (
-        <Alert className="mb-6 max-w-2xl">本診所要求所有員工啟用兩步驟驗證，完成設定後才能使用其他功能。</Alert>
+        <Alert className="mb-6 max-w-2xl">
+          本診所要求所有員工啟用兩步驟驗證，完成設定後才能使用其他功能。
+        </Alert>
       )}
       <Card className="max-w-2xl">
         <CardHeader className="flex items-center gap-2">

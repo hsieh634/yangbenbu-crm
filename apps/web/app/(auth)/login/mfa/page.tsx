@@ -26,7 +26,10 @@ function MfaForm() {
     },
   });
 
-  const expired = verify.error instanceof ApiError && verify.error.status === 401 && verify.error.code !== 'INVALID_TOTP';
+  const expired =
+    verify.error instanceof ApiError &&
+    verify.error.status === 401 &&
+    verify.error.code !== 'INVALID_TOTP';
 
   return (
     <>
@@ -34,7 +37,9 @@ function MfaForm() {
         <ShieldCheck className="size-6" />
       </div>
       <h1 className="text-2xl font-semibold tracking-tight">兩步驟驗證</h1>
-      <p className="mt-1.5 text-sm text-ink-muted">請開啟驗證器 App（Google Authenticator、Microsoft Authenticator 等），輸入 6 位數驗證碼。</p>
+      <p className="mt-1.5 text-sm text-ink-muted">
+        請開啟驗證器 App（Google Authenticator、Microsoft Authenticator 等），輸入 6 位數驗證碼。
+      </p>
 
       <form
         className="mt-8 space-y-5"
@@ -47,7 +52,11 @@ function MfaForm() {
           <Alert>
             {expired ? (
               <>
-                驗證逾時，請<Link href="/login" className="underline">重新登入</Link>。
+                驗證逾時，請
+                <Link href="/login" className="underline">
+                  重新登入
+                </Link>
+                。
               </>
             ) : (
               verify.error.message
@@ -67,7 +76,12 @@ function MfaForm() {
             className="h-12 text-center font-mono text-xl tracking-[0.5em]"
           />
         </div>
-        <Button type="submit" size="lg" className="w-full" disabled={code.length !== 6 || verify.isPending}>
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full"
+          disabled={code.length !== 6 || verify.isPending}
+        >
           {verify.isPending ? '驗證中…' : '驗證並登入'}
         </Button>
         <Link href="/login" className="block text-center text-sm text-ink-muted hover:text-ink">

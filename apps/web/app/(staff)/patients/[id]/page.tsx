@@ -29,7 +29,10 @@ function NationalId({ patientId, masked }: { patientId: string; masked: string |
   const can = useCan();
   const [shown, setShown] = useState<string | null>(null);
   const reveal = useMutation({
-    mutationFn: () => api<{ nationalId: string | null }>(`/patients/${patientId}/national-id/reveal`, { method: 'POST' }),
+    mutationFn: () =>
+      api<{ nationalId: string | null }>(`/patients/${patientId}/national-id/reveal`, {
+        method: 'POST',
+      }),
     onSuccess: (r) => setShown(r.nationalId),
   });
 
@@ -43,7 +46,12 @@ function NationalId({ patientId, masked }: { patientId: string; masked: string |
             <EyeOff /> 隱藏
           </Button>
         ) : (
-          <Button variant="secondary" size="sm" onClick={() => reveal.mutate()} disabled={reveal.isPending}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => reveal.mutate()}
+            disabled={reveal.isPending}
+          >
             <Eye /> 查看完整號碼
           </Button>
         ))}
@@ -57,19 +65,32 @@ function NationalId({ patientId, masked }: { patientId: string; masked: string |
 function Detail() {
   const { id } = useParams<{ id: string }>();
   const can = useCan();
-  const { data: p, isPending, error } = useQuery({
+  const {
+    data: p,
+    isPending,
+    error,
+  } = useQuery({
     queryKey: ['patients', id],
     queryFn: () => api<PatientDetail>(`/patients/${id}`),
   });
 
   if (error) {
-    return <Alert>{error instanceof ApiError && error.status === 404 ? '找不到這位病患，或病患不屬於目前的診所。' : error.message}</Alert>;
+    return (
+      <Alert>
+        {error instanceof ApiError && error.status === 404
+          ? '找不到這位病患，或病患不屬於目前的診所。'
+          : error.message}
+      </Alert>
+    );
   }
   if (isPending) return <Skeleton className="h-72 w-full" />;
 
   return (
     <>
-      <Link href="/patients" className="mb-4 inline-flex items-center gap-1 text-sm text-ink-muted hover:text-ink">
+      <Link
+        href="/patients"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-ink-muted hover:text-ink"
+      >
         <ArrowLeft className="size-4" /> 病患列表
       </Link>
 
@@ -114,9 +135,15 @@ function Detail() {
             {can('patient:read_medical') ? (
               <dl className="space-y-5">
                 <Field label="過敏">
-                  {p.allergies ? <Badge tone="danger">{p.allergies}</Badge> : <span className="text-ink-muted">無</span>}
+                  {p.allergies ? (
+                    <Badge tone="danger">{p.allergies}</Badge>
+                  ) : (
+                    <span className="text-ink-muted">無</span>
+                  )}
                 </Field>
-                <Field label="既往病史">{p.medicalHistory ?? <span className="text-ink-muted">無</span>}</Field>
+                <Field label="既往病史">
+                  {p.medicalHistory ?? <span className="text-ink-muted">無</span>}
+                </Field>
               </dl>
             ) : (
               <p className="flex items-center gap-2 text-sm text-ink-muted">

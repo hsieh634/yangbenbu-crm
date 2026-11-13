@@ -33,7 +33,10 @@ function AuditList() {
   const [page, setPage] = useState(1);
   const { data, isPending, error, isPlaceholderData } = useQuery({
     queryKey: ['audit-logs', { action, page }],
-    queryFn: () => api<Paginated<AuditLogEntry>>(`/audit-logs${queryString({ action, page, pageSize: PAGE_SIZE })}`),
+    queryFn: () =>
+      api<Paginated<AuditLogEntry>>(
+        `/audit-logs${queryString({ action, page, pageSize: PAGE_SIZE })}`,
+      ),
     placeholderData: keepPreviousData,
   });
 
@@ -90,11 +93,15 @@ function AuditList() {
               ))}
             {data?.items.map((log) => (
               <tr key={log.id}>
-                <Td className="whitespace-nowrap font-mono text-xs text-ink-muted">{formatDateTime(log.createdAt)}</Td>
+                <Td className="whitespace-nowrap font-mono text-xs text-ink-muted">
+                  {formatDateTime(log.createdAt)}
+                </Td>
                 <Td className="whitespace-nowrap">
                   {log.actor?.name ?? <span className="text-ink-muted">系統</span>}
                   {log.actorRole && (
-                    <span className="ml-1.5 text-xs text-ink-muted">{ROLE_LABELS[log.actorRole as Role]}</span>
+                    <span className="ml-1.5 text-xs text-ink-muted">
+                      {ROLE_LABELS[log.actorRole as Role]}
+                    </span>
                   )}
                 </Td>
                 <Td>
@@ -110,21 +117,30 @@ function AuditList() {
                 </Td>
                 <Td className="hidden md:table-cell">
                   {log.patient ? (
-                    <Link href={`/patients/${log.patient.id}`} className="text-jade-700 hover:underline">
+                    <Link
+                      href={`/patients/${log.patient.id}`}
+                      className="text-jade-700 hover:underline"
+                    >
                       {log.patient.name}
-                      <span className="ml-1.5 font-mono text-xs text-ink-muted">{log.patient.chartNo}</span>
+                      <span className="ml-1.5 font-mono text-xs text-ink-muted">
+                        {log.patient.chartNo}
+                      </span>
                     </Link>
                   ) : (
                     <span className="text-ink-muted">—</span>
                   )}
                 </Td>
-                <Td className="hidden font-mono text-xs text-ink-muted lg:table-cell">{log.ip ?? '—'}</Td>
+                <Td className="hidden font-mono text-xs text-ink-muted lg:table-cell">
+                  {log.ip ?? '—'}
+                </Td>
               </tr>
             ))}
           </tbody>
         </Table>
         {data && data.total === 0 && <EmptyState title="沒有紀錄" />}
-        {data && data.total > 0 && <Pagination page={page} pageSize={PAGE_SIZE} total={data.total} onChange={setPage} />}
+        {data && data.total > 0 && (
+          <Pagination page={page} pageSize={PAGE_SIZE} total={data.total} onChange={setPage} />
+        )}
       </Card>
     </>
   );

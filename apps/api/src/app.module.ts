@@ -33,7 +33,10 @@ import { StaffModule } from './modules/staff/staff.module';
           ],
           censor: '[REDACTED]',
         },
-        transport: env().NODE_ENV === 'development' ? { target: 'pino-pretty', options: { singleLine: true } } : undefined,
+        transport:
+          env().NODE_ENV === 'development'
+            ? { target: 'pino-pretty', options: { singleLine: true } }
+            : undefined,
       },
     }),
     PrismaModule,

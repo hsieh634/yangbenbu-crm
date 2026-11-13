@@ -60,7 +60,11 @@ export class PatientsService {
     return { ...base, OR: or };
   }
 
-  async list(auth: AuthContext, query: PatientListQuery, meta: RequestMeta): Promise<Paginated<PatientSummary>> {
+  async list(
+    auth: AuthContext,
+    query: PatientListQuery,
+    meta: RequestMeta,
+  ): Promise<Paginated<PatientSummary>> {
     const where = this.searchWhere(query.q);
     return this.prisma.tenant(auth.clinicId, async (tx) => {
       const [total, rows] = await Promise.all([
@@ -117,7 +121,11 @@ export class PatientsService {
     });
   }
 
-  async revealNationalId(auth: AuthContext, id: string, meta: RequestMeta): Promise<{ nationalId: string | null }> {
+  async revealNationalId(
+    auth: AuthContext,
+    id: string,
+    meta: RequestMeta,
+  ): Promise<{ nationalId: string | null }> {
     if (!UUID_RE.test(id)) throw new NotFoundException();
     return this.prisma.tenant(auth.clinicId, async (tx) => {
       const p = await tx.patient.findFirst({ where: { id, deletedAt: null } });

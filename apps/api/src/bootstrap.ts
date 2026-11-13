@@ -11,7 +11,9 @@ import { allowedOrigins } from './config/env';
 const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 /** main.ts 與測試共用的應用程式設定 */
-export async function createApp(options: { logger?: boolean } = {}): Promise<NestFastifyApplication> {
+export async function createApp(
+  options: { logger?: boolean } = {},
+): Promise<NestFastifyApplication> {
   assertFieldKeys();
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,

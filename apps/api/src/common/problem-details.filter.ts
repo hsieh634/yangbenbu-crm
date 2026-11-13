@@ -32,7 +32,8 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
       const body = exception.getResponse();
-      const extra = typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : {};
+      const extra =
+        typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : {};
       const message = typeof extra.message === 'string' ? extra.message : undefined;
       problem = {
         type: 'about:blank',
@@ -40,13 +41,22 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         status,
         detail: message ?? (typeof body === 'string' ? body : undefined),
         code: typeof extra.code === 'string' ? extra.code : undefined,
-        errors: Array.isArray(extra.errors) ? (extra.errors as ProblemDetails['errors']) : undefined,
+        errors: Array.isArray(extra.errors)
+          ? (extra.errors as ProblemDetails['errors'])
+          : undefined,
       };
     } else {
       this.logger.error(exception);
-      problem = { type: 'about:blank', title: TITLES[500]!, status: HttpStatus.INTERNAL_SERVER_ERROR };
+      problem = {
+        type: 'about:blank',
+        title: TITLES[500]!,
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      };
     }
 
-    void reply.status(problem.status).header('content-type', 'application/problem+json').send(problem);
+    void reply
+      .status(problem.status)
+      .header('content-type', 'application/problem+json')
+      .send(problem);
   }
 }

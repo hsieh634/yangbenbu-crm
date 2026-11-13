@@ -14,7 +14,8 @@ export function Topbar({ me, onMenu }: { me: MeResponse; onMenu: () => void }) {
   const queryClient = useQueryClient();
 
   const switchClinic = useMutation({
-    mutationFn: (clinicId: string) => api('/auth/switch-clinic', { method: 'POST', json: { clinicId } }),
+    mutationFn: (clinicId: string) =>
+      api('/auth/switch-clinic', { method: 'POST', json: { clinicId } }),
     // 換診所後所有資料都不同：回到該區塊首頁（原本的病患在新診所不存在），並重新載入所有資料
     onSuccess: async () => {
       router.replace(`/${pathname.split('/')[1] ?? 'board'}`);
@@ -32,7 +33,13 @@ export function Topbar({ me, onMenu }: { me: MeResponse; onMenu: () => void }) {
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-paper/90 px-4 backdrop-blur md:px-8">
-      <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenu} aria-label="開啟選單">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="md:hidden"
+        onClick={onMenu}
+        aria-label="開啟選單"
+      >
         <Menu />
       </Button>
 
@@ -63,7 +70,13 @@ export function Topbar({ me, onMenu }: { me: MeResponse; onMenu: () => void }) {
           <div className="text-xs text-ink-muted">{me.staff.email}</div>
         </div>
         <Badge tone="jade">{ROLE_LABELS[me.role]}</Badge>
-        <Button variant="ghost" size="icon" onClick={() => logout.mutate()} aria-label="登出" title="登出">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => logout.mutate()}
+          aria-label="登出"
+          title="登出"
+        >
           <LogOut />
         </Button>
       </div>

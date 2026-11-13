@@ -23,6 +23,10 @@ export function ageFrom(birthDate: string): number {
   const b = new Date(birthDate);
   const now = new Date();
   let age = now.getFullYear() - b.getFullYear();
-  if (now.getMonth() < b.getMonth() || (now.getMonth() === b.getMonth() && now.getDate() < b.getDate())) age--;
+  if (
+    now.getMonth() < b.getMonth() ||
+    (now.getMonth() === b.getMonth() && now.getDate() < b.getDate())
+  )
+    age--;
   return age;
 }

@@ -1,6 +1,18 @@
-import { ConflictException, ForbiddenException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { burnPasswordCheck, decryptField, encryptField, verifyPassword } from '@yangbenbu/db';
-import { permissionsFor, type LoginInput, type LoginResult, type MeResponse } from '@yangbenbu/shared';
+import {
+  permissionsFor,
+  type LoginInput,
+  type LoginResult,
+  type MeResponse,
+} from '@yangbenbu/shared';
 import type { FastifyReply } from 'fastify';
 import type { AuthContext, RequestMeta } from '../../common/auth-context';
 import { PrismaService } from '../../common/prisma.service';
@@ -52,7 +64,10 @@ export class AuthService {
         meta,
       });
       throw new HttpException(
-        { code: 'ACCOUNT_LOCKED', message: `登入失敗次數過多，帳號已暫時鎖定，請 ${LOCKOUT_MINUTES} 分鐘後再試` },
+        {
+          code: 'ACCOUNT_LOCKED',
+          message: `登入失敗次數過多，帳號已暫時鎖定，請 ${LOCKOUT_MINUTES} 分鐘後再試`,
+        },
         HttpStatus.LOCKED,
       );
     }
@@ -69,7 +84,11 @@ export class AuthService {
 
     await this.prisma.staff.update({
       where: { id: staff.id },
-      data: { failedLoginCount: 0, lockedUntil: null, ...(staff.totpEnabled ? {} : { lastLoginAt: new Date() }) },
+      data: {
+        failedLoginCount: 0,
+        lockedUntil: null,
+        ...(staff.totpEnabled ? {} : { lastLoginAt: new Date() }),
+      },
     });
     await this.sessions.create(reply, {
       staffId: staff.id,
@@ -92,14 +111,22 @@ export class AuthService {
   }
 
   /** 兩步驟驗證通過後換發新的 Session（避免 Session fixation） */
-  async verifyMfa(auth: AuthContext, code: string, reply: FastifyReply, meta: RequestMeta): Promise<LoginResult> {
+  async verifyMfa(
+    auth: AuthContext,
+    code: string,
+    reply: FastifyReply,
+    meta: RequestMeta,
+  ): Promise<LoginResult> {
     const staff = await this.prisma.staff.findUniqueOrThrow({ where: { id: auth.staffId } });
     if (!staff.totpEnabled || !staff.totpSecretEnc) {
       throw new ConflictException({ code: 'MFA_NOT_ENABLED', message: '此帳號未啟用兩步驟驗證' });
     }
     if (staff.lockedUntil && staff.lockedUntil > new Date()) {
       await this.sessions.revoke(auth.sessionId);
-      throw new HttpException({ code: 'ACCOUNT_LOCKED', message: '帳號已暫時鎖定' }, HttpStatus.LOCKED);
+      throw new HttpException(
+        { code: 'ACCOUNT_LOCKED', message: '帳號已暫時鎖定' },
+        HttpStatus.LOCKED,
+      );
     }
 
     const step = verifyTotp(decryptField(staff.totpSecretEnc), code);
@@ -113,7 +140,12 @@ export class AuthService {
       data: { failedLoginCount: 0, totpLastUsedStep: step, lastLoginAt: new Date() },
     });
     await this.sessions.revoke(auth.sessionId);
-    await this.sessions.create(reply, { staffId: staff.id, clinicId: auth.clinicId, mfaPending: false, meta });
+    await this.sessions.create(reply, {
+      staffId: staff.id,
+      clinicId: auth.clinicId,
+      mfaPending: false,
+      meta,
+    });
     await this.audit.record({
       clinicId: auth.clinicId,
       actorStaffId: staff.id,
@@ -154,7 +186,13 @@ export class AuthService {
   async me(auth: AuthContext): Promise<MeResponse> {
     const staff = await this.prisma.staff.findUniqueOrThrow({
       where: { id: auth.staffId },
-      include: { memberships: { where: { isActive: true }, include: { clinic: true }, orderBy: { createdAt: 'asc' } } },
+      include: {
+        memberships: {
+          where: { isActive: true },
+          include: { clinic: true },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
     });
     const active = staff.memberships.find((m) => m.clinicId === auth.clinicId)!;
     return {
@@ -162,7 +200,11 @@ export class AuthService {
       activeClinic: { id: active.clinic.id, name: active.clinic.name },
       role: auth.role,
       permissions: permissionsFor(auth.role),
-      clinics: staff.memberships.map((m) => ({ id: m.clinic.id, name: m.clinic.name, role: m.role })),
+      clinics: staff.memberships.map((m) => ({
+        id: m.clinic.id,
+        name: m.clinic.name,
+        role: m.role,
+      })),
       mfaEnrollmentRequired: env().REQUIRE_MFA && !staff.totpEnabled,
     };
   }
@@ -183,7 +225,10 @@ export class AuthService {
       });
       throw new ForbiddenException({ code: 'NOT_A_MEMBER', message: '您不屬於這家診所' });
     }
-    await this.prisma.session.update({ where: { id: auth.sessionId }, data: { activeClinicId: clinicId } });
+    await this.prisma.session.update({
+      where: { id: auth.sessionId },
+      data: { activeClinicId: clinicId },
+    });
     await this.audit.record({
       clinicId,
       actorStaffId: auth.staffId,
@@ -232,7 +277,10 @@ export class AuthService {
     }
     const step = verifyTotp(decryptField(staff.totpSecretEnc), code);
     if (step === null) {
-      throw new UnauthorizedException({ code: 'INVALID_TOTP', message: '驗證碼錯誤，請確認手機時間是否正確' });
+      throw new UnauthorizedException({
+        code: 'INVALID_TOTP',
+        message: '驗證碼錯誤，請確認手機時間是否正確',
+      });
     }
     await this.prisma.staff.update({
       where: { id: staff.id },

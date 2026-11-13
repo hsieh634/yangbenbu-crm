@@ -26,8 +26,20 @@ export const NAV_SECTIONS: { title?: string; items: NavItem[] }[] = [
     items: [
       { href: '/board', label: '今日看板', icon: KanbanSquare, permission: 'board:read', phase: 1 },
       { href: '/patients', label: '病患', icon: Users, permission: 'patient:read' },
-      { href: '/appointments', label: '預約', icon: CalendarDays, permission: 'appointment:read', phase: 1 },
-      { href: '/follow-ups', label: '診後追蹤', icon: ClipboardList, permission: 'follow_up:read', phase: 2 },
+      {
+        href: '/appointments',
+        label: '預約',
+        icon: CalendarDays,
+        permission: 'appointment:read',
+        phase: 1,
+      },
+      {
+        href: '/follow-ups',
+        label: '診後追蹤',
+        icon: ClipboardList,
+        permission: 'follow_up:read',
+        phase: 2,
+      },
       { href: '/reports', label: '報表', icon: LineChart, permission: 'report:read', phase: 2 },
     ],
   },

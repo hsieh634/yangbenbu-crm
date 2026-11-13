@@ -23,7 +23,8 @@ export default function BoardPage() {
         title="今日看板"
         description={
           <>
-            {today && `${today}・`}就診進度看板將於 <span className="font-medium text-ochre-700">Phase 1</span> 上線，以下為欄位預覽。
+            {today && `${today}・`}就診進度看板將於{' '}
+            <span className="font-medium text-ochre-700">Phase 1</span> 上線，以下為欄位預覽。
           </>
         }
       />

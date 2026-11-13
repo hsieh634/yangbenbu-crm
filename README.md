@@ -4,33 +4,33 @@
 
 定位為 **HIS 之上的 CRM／健康管理層**：健保卡、申報、處方交給既有 HIS；養本簿負責體質問卷、調理方案、療程堂數、今日看板、跨職務交接、診後追蹤與 LINE 互動。
 
-| 登入（示範模式） | 病患詳情：身分證字號需另外查看並留下紀錄 |
-|---|---|
-| ![登入](docs/screenshots/login.png) | ![病患詳情](docs/screenshots/patient-detail.png) |
-| **病患列表** | **稽核紀錄：誰、何時、看了哪位病患** |
-| ![病患列表](docs/screenshots/patients.png) | ![稽核紀錄](docs/screenshots/audit.png) |
+| 登入（示範模式）                           | 病患詳情：身分證字號需另外查看並留下紀錄         |
+| ------------------------------------------ | ------------------------------------------------ |
+| ![登入](docs/screenshots/login.png)        | ![病患詳情](docs/screenshots/patient-detail.png) |
+| **病患列表**                               | **稽核紀錄：誰、何時、看了哪位病患**             |
+| ![病患列表](docs/screenshots/patients.png) | ![稽核紀錄](docs/screenshots/audit.png)          |
 
 > 畫面中所有人名、診所、身分證字號皆為虛構的示範資料。
 
 ## 開發進度
 
-| 階段 | 內容 | 狀態 |
-|---|---|---|
+| 階段        | 內容                                                           | 狀態    |
+| ----------- | -------------------------------------------------------------- | ------- |
 | **Phase 0** | Monorepo、認證與兩步驟驗證、多租戶隔離、角色權限、稽核紀錄、CI | ✅ 完成 |
-| Phase 1 | 病患管理、預約、就診單與今日看板、療程扣堂、領藥紀錄 | 規劃中 |
-| Phase 2 | 問卷引擎（體質問卷）、健康數據、調理方案、診後追蹤、報表 | 規劃中 |
-| Phase 3 | LINE LIFF 病患端「我的養本簿」、LINE 推播 | 規劃中 |
-| Phase 4 | FHIR（TW Core）API 與匯出、HIS 匯入 | 規劃中 |
+| Phase 1     | 病患管理、預約、就診單與今日看板、療程扣堂、領藥紀錄           | 規劃中  |
+| Phase 2     | 問卷引擎（體質問卷）、健康數據、調理方案、診後追蹤、報表       | 規劃中  |
+| Phase 3     | LINE LIFF 病患端「我的養本簿」、LINE 推播                      | 規劃中  |
+| Phase 4     | FHIR（TW Core）API 與匯出、HIS 匯入                            | 規劃中  |
 
 ## 技術棧
 
-| 層級 | 技術 |
-|---|---|
-| 前端 | Next.js 16（App Router）· React 19 · Tailwind CSS 4 · TanStack Query |
-| 後端 | NestJS 11（Fastify）· Prisma 6 · PostgreSQL 16 |
-| 背景工作 | pg-boss（以 PostgreSQL 當佇列，不需 Redis） |
-| 共用 | TypeScript · Zod（前後端共用驗證規則與型別） |
-| 工具 | pnpm workspaces · Turborepo · Vitest · Playwright · GitHub Actions |
+| 層級     | 技術                                                                 |
+| -------- | -------------------------------------------------------------------- |
+| 前端     | Next.js 16（App Router）· React 19 · Tailwind CSS 4 · TanStack Query |
+| 後端     | NestJS 11（Fastify）· Prisma 6 · PostgreSQL 16                       |
+| 背景工作 | pg-boss（以 PostgreSQL 當佇列，不需 Redis）                          |
+| 共用     | TypeScript · Zod（前後端共用驗證規則與型別）                         |
+| 工具     | pnpm workspaces · Turborepo · Vitest · Playwright · GitHub Actions   |
 
 ## Phase 0 重點
 
@@ -86,26 +86,26 @@ pnpm dev
 
 密碼皆為 `Demo1234!`。
 
-| 角色 | Email | 用來展示 |
-|---|---|---|
-| 管理者 | admin@yangbenbu.demo | 稽核紀錄、員工帳號 |
-| 醫師 | doctor@yangbenbu.demo | 同時屬於兩家診所，可切換 |
-| 櫃檯 | frontdesk@yangbenbu.demo | 可查看完整身分證字號 |
-| 診務人員 | assistant@yangbenbu.demo | 權限最少 |
-| 健康管理師 | health@yangbenbu.demo | 看不到完整身分證字號 |
+| 角色           | Email                       | 用來展示                       |
+| -------------- | --------------------------- | ------------------------------ |
+| 管理者         | admin@yangbenbu.demo        | 稽核紀錄、員工帳號             |
+| 醫師           | doctor@yangbenbu.demo       | 同時屬於兩家診所，可切換       |
+| 櫃檯           | frontdesk@yangbenbu.demo    | 可查看完整身分證字號           |
+| 診務人員       | assistant@yangbenbu.demo    | 權限最少                       |
+| 健康管理師     | health@yangbenbu.demo       | 看不到完整身分證字號           |
 | 管理者（青禾） | admin.qinghe@yangbenbu.demo | 另一家診所，看不到養本堂的資料 |
 
 ## 指令
 
-| 指令 | 說明 |
-|---|---|
-| `pnpm dev` | 啟動所有服務（watch 模式） |
-| `pnpm build` | 建置全部 |
-| `pnpm lint` / `pnpm typecheck` | 程式碼檢查 |
-| `pnpm test` | 執行所有測試 |
-| `pnpm db:migrate` | 修改 schema 後產生 migration |
-| `pnpm db:deploy` | 套用 migration |
-| `pnpm db:seed` | 載入示範資料（可重複執行） |
+| 指令                           | 說明                         |
+| ------------------------------ | ---------------------------- |
+| `pnpm dev`                     | 啟動所有服務（watch 模式）   |
+| `pnpm build`                   | 建置全部                     |
+| `pnpm lint` / `pnpm typecheck` | 程式碼檢查                   |
+| `pnpm test`                    | 執行所有測試                 |
+| `pnpm db:migrate`              | 修改 schema 後產生 migration |
+| `pnpm db:deploy`               | 套用 migration               |
+| `pnpm db:seed`                 | 載入示範資料（可重複執行）   |
 
 ## 測試
 

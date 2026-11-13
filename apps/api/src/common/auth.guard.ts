@@ -32,13 +32,19 @@ export class AuthGuard implements CanActivate {
 
     const req = ctx.switchToHttp().getRequest<FastifyRequest>();
     const session = await this.sessions.resolve(req);
-    if (!session) throw new UnauthorizedException({ code: 'UNAUTHENTICATED', message: '請重新登入' });
+    if (!session)
+      throw new UnauthorizedException({ code: 'UNAUTHENTICATED', message: '請重新登入' });
 
     const { staff } = session;
-    const membership = staff.memberships.find((m) => m.clinicId === session.activeClinicId && m.isActive);
+    const membership = staff.memberships.find(
+      (m) => m.clinicId === session.activeClinicId && m.isActive,
+    );
     if (!staff.isActive || !membership) {
       await this.sessions.revoke(session.id);
-      throw new UnauthorizedException({ code: 'ACCOUNT_DISABLED', message: '帳號或診所權限已停用' });
+      throw new UnauthorizedException({
+        code: 'ACCOUNT_DISABLED',
+        message: '帳號或診所權限已停用',
+      });
     }
 
     if (session.mfaPending && !flag(ALLOW_MFA_PENDING)) {

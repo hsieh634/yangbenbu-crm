@@ -1,4 +1,9 @@
-import { SetMetadata, UnauthorizedException, createParamDecorator, type ExecutionContext } from '@nestjs/common';
+import {
+  SetMetadata,
+  UnauthorizedException,
+  createParamDecorator,
+  type ExecutionContext,
+} from '@nestjs/common';
 import type { Permission } from '@yangbenbu/shared';
 import type { FastifyRequest } from 'fastify';
 import type { AuthContext, RequestMeta } from './auth-context';
@@ -21,11 +26,13 @@ export const AllowMfaEnrollment = () => SetMetadata(ALLOW_MFA_ENROLLMENT, true);
 export const RequirePermissions = (...permissions: Permission[]) =>
   SetMetadata(REQUIRED_PERMISSIONS, permissions);
 
-export const CurrentAuth = createParamDecorator((_: unknown, ctx: ExecutionContext): AuthContext => {
-  const req = ctx.switchToHttp().getRequest<FastifyRequest>();
-  if (!req.auth) throw new UnauthorizedException();
-  return req.auth;
-});
+export const CurrentAuth = createParamDecorator(
+  (_: unknown, ctx: ExecutionContext): AuthContext => {
+    const req = ctx.switchToHttp().getRequest<FastifyRequest>();
+    if (!req.auth) throw new UnauthorizedException();
+    return req.auth;
+  },
+);
 
 export function requestMeta(req: FastifyRequest): RequestMeta {
   const ua = req.headers['user-agent'];

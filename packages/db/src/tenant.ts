@@ -25,8 +25,12 @@ export async function withTenant<T>(
  * 確認目前連線的資料庫角色不會繞過 RLS。
  * 超級使用者或具 BYPASSRLS 的角色會讓租戶隔離失效，正式環境必須拒絕啟動。
  */
-export async function checkRlsEnforced(prisma: PrismaClient): Promise<{ ok: boolean; role: string }> {
-  const rows = await prisma.$queryRaw<{ rolname: string; rolsuper: boolean; rolbypassrls: boolean }[]>`
+export async function checkRlsEnforced(
+  prisma: PrismaClient,
+): Promise<{ ok: boolean; role: string }> {
+  const rows = await prisma.$queryRaw<
+    { rolname: string; rolsuper: boolean; rolbypassrls: boolean }[]
+  >`
     SELECT rolname, rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user`;
   const row = rows[0];
   if (!row) return { ok: false, role: 'unknown' };

@@ -100,7 +100,9 @@ export class AuditService {
       items: rows.map((r) => ({
         id: r.id,
         createdAt: r.createdAt.toISOString(),
-        actor: r.actorStaffId ? { id: r.actorStaffId, name: names.get(r.actorStaffId) ?? '（已刪除）' } : null,
+        actor: r.actorStaffId
+          ? { id: r.actorStaffId, name: names.get(r.actorStaffId) ?? '（已刪除）' }
+          : null,
         actorRole: r.actorRole,
         action: r.action,
         resourceType: r.resourceType,

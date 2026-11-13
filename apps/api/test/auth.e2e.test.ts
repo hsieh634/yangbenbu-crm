@@ -12,7 +12,8 @@ afterAll(async () => {
   await db.$disconnect();
 });
 
-const me = (cookie: string) => app.inject({ method: 'GET', url: '/api/v1/auth/me', headers: { cookie } });
+const me = (cookie: string) =>
+  app.inject({ method: 'GET', url: '/api/v1/auth/me', headers: { cookie } });
 
 describe('登入', () => {
   it('成功登入後發出 httpOnly、SameSite=Strict 的 Session cookie', async () => {
@@ -55,7 +56,11 @@ describe('登入', () => {
   });
 
   it('格式錯誤回傳 400 與欄位錯誤', async () => {
-    const res = await app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: { email: 'x' } });
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/login',
+      payload: { email: 'x' },
+    });
     expect(res.statusCode).toBe(400);
     expect(res.json().errors.map((e: { path: string }) => e.path)).toEqual(
       expect.arrayContaining(['email', 'password']),
@@ -78,7 +83,11 @@ describe('登入', () => {
     });
 
     for (let i = 0; i < 5; i++) {
-      await app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: { email, password: 'wrong' } });
+      await app.inject({
+        method: 'POST',
+        url: '/api/v1/auth/login',
+        payload: { email, password: 'wrong' },
+      });
     }
     const res = await app.inject({
       method: 'POST',
@@ -101,7 +110,10 @@ describe('Session', () => {
   it('登出後 Session 立即失效', async () => {
     const cookie = await login(app, ACCOUNTS.doctor);
     expect((await me(cookie)).statusCode).toBe(200);
-    expect((await app.inject({ method: 'POST', url: '/api/v1/auth/logout', headers: { cookie } })).statusCode).toBe(204);
+    expect(
+      (await app.inject({ method: 'POST', url: '/api/v1/auth/logout', headers: { cookie } }))
+        .statusCode,
+    ).toBe(204);
     expect((await me(cookie)).statusCode).toBe(401);
   });
 
@@ -159,7 +171,11 @@ describe('兩步驟驗證（TOTP）', () => {
   it('設定 → 啟用 → 登入需驗證碼 → 驗證碼不能重複使用', async () => {
     let cookie = await login(app, ACCOUNTS.adminQinghe);
 
-    const setup = await app.inject({ method: 'POST', url: '/api/v1/auth/mfa/setup', headers: { cookie } });
+    const setup = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/mfa/setup',
+      headers: { cookie },
+    });
     expect(setup.statusCode).toBe(200);
     const { secret, otpauthUri } = setup.json();
     expect(otpauthUri).toMatch(/^otpauth:\/\/totp\//);

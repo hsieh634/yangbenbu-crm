@@ -17,13 +17,25 @@ export function Pagination({
     <div className="flex items-center justify-between px-4 py-3 text-sm text-ink-muted">
       <span>共 {total} 筆</span>
       <div className="flex items-center gap-2">
-        <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => onChange(page - 1)} aria-label="上一頁">
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={page <= 1}
+          onClick={() => onChange(page - 1)}
+          aria-label="上一頁"
+        >
           <ChevronLeft />
         </Button>
         <span className="tabular-nums">
           {page} / {pages}
         </span>
-        <Button variant="secondary" size="sm" disabled={page >= pages} onClick={() => onChange(page + 1)} aria-label="下一頁">
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={page >= pages}
+          onClick={() => onChange(page + 1)}
+          aria-label="下一頁"
+        >
           <ChevronRight />
         </Button>
       </div>

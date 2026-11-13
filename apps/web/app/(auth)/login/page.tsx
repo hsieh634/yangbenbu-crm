@@ -42,14 +42,21 @@ function LoginForm() {
     e.preventDefault();
     const parsed = loginSchema.safeParse({ email, password });
     if (!parsed.success) {
-      setFieldErrors(Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), i.message])));
+      setFieldErrors(
+        Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), i.message])),
+      );
       return;
     }
     setFieldErrors({});
     login.mutate(parsed.data);
   }
 
-  const error = login.error instanceof ApiError ? login.error.message : login.error ? '無法連線，請稍後再試' : null;
+  const error =
+    login.error instanceof ApiError
+      ? login.error.message
+      : login.error
+        ? '無法連線，請稍後再試'
+        : null;
 
   return (
     <>

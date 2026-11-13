@@ -19,7 +19,8 @@ export default async function setup(project: TestProject) {
   const rootEnv = resolve(__dirname, '../../../.env');
   if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
   const base = process.env.TEST_DATABASE_URL;
-  if (!base) throw new Error('請設定 TEST_DATABASE_URL（測試會在同一台資料庫伺服器上建立暫時資料庫）');
+  if (!base)
+    throw new Error('請設定 TEST_DATABASE_URL（測試會在同一台資料庫伺服器上建立暫時資料庫）');
 
   const dbName = `yangbenbu_test_${Date.now()}_${process.pid}`;
   const admin = new URL(base);

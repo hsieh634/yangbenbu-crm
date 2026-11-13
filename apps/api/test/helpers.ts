@@ -28,7 +28,11 @@ export function sessionCookie(setCookie: string | string[] | undefined): string 
 }
 
 export async function login(app: NestFastifyApplication, email: string, password = DEMO_PASSWORD) {
-  const res = await app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: { email, password } });
+  const res = await app.inject({
+    method: 'POST',
+    url: '/api/v1/auth/login',
+    payload: { email, password },
+  });
   if (res.statusCode !== 200) throw new Error(`登入失敗 ${res.statusCode} ${res.body}`);
   return sessionCookie(res.headers['set-cookie']);
 }

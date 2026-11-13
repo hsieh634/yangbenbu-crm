@@ -34,7 +34,10 @@ function PatientList() {
 
   const { data, isPending, error, isPlaceholderData } = useQuery({
     queryKey: ['patients', { q: query, page }],
-    queryFn: () => api<Paginated<PatientSummary>>(`/patients${queryString({ q: query, page, pageSize: PAGE_SIZE })}`),
+    queryFn: () =>
+      api<Paginated<PatientSummary>>(
+        `/patients${queryString({ q: query, page, pageSize: PAGE_SIZE })}`,
+      ),
     placeholderData: keepPreviousData,
   });
 
@@ -85,7 +88,10 @@ function PatientList() {
               <tr key={p.id} className="hover:bg-jade-50/50">
                 <Td className="font-mono text-xs text-ink-muted">{p.chartNo}</Td>
                 <Td>
-                  <Link href={`/patients/${p.id}`} className="font-medium text-jade-700 hover:underline">
+                  <Link
+                    href={`/patients/${p.id}`}
+                    className="font-medium text-jade-700 hover:underline"
+                  >
                     {p.name}
                   </Link>
                 </Td>
@@ -93,7 +99,9 @@ function PatientList() {
                   {GENDER_LABELS[p.gender]}・{ageFrom(p.birthDate)} 歲
                 </Td>
                 <Td className="hidden font-mono text-xs md:table-cell">{p.phone}</Td>
-                <Td className="hidden font-mono text-xs text-ink-muted lg:table-cell">{p.nationalIdMasked ?? '—'}</Td>
+                <Td className="hidden font-mono text-xs text-ink-muted lg:table-cell">
+                  {p.nationalIdMasked ?? '—'}
+                </Td>
                 <Td className="hidden md:table-cell">
                   <div className="flex flex-wrap gap-1">
                     {p.tags.map((t) => (
@@ -105,7 +113,9 @@ function PatientList() {
             ))}
           </tbody>
         </Table>
-        {data && data.total === 0 && <EmptyState title="找不到符合的病患">請換個關鍵字試試。</EmptyState>}
+        {data && data.total === 0 && (
+          <EmptyState title="找不到符合的病患">請換個關鍵字試試。</EmptyState>
+        )}
         {data && data.total > 0 && (
           <Pagination page={page} pageSize={PAGE_SIZE} total={data.total} onChange={setPage} />
         )}

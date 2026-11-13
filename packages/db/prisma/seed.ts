@@ -24,16 +24,97 @@ const rand = mulberry32(20261113);
 const pick = <T>(arr: readonly T[]): T => arr[Math.floor(rand() * arr.length)]!;
 const int = (min: number, max: number) => min + Math.floor(rand() * (max - min + 1));
 
-const SURNAMES = ['陳', '林', '黃', '張', '李', '王', '吳', '劉', '蔡', '楊', '許', '鄭', '謝', '郭', '洪', '曾', '邱', '廖', '賴', '周'];
-const GIVEN_F = ['淑芬', '美玲', '雅婷', '怡君', '佳穎', '詩涵', '宜蓁', '欣怡', '惠美', '靜宜', '筱婷', '思妤'];
-const GIVEN_M = ['志明', '俊傑', '建宏', '冠宇', '家豪', '承恩', '宗翰', '柏宇', '文雄', '國華', '彥廷', '士豪'];
+const SURNAMES = [
+  '陳',
+  '林',
+  '黃',
+  '張',
+  '李',
+  '王',
+  '吳',
+  '劉',
+  '蔡',
+  '楊',
+  '許',
+  '鄭',
+  '謝',
+  '郭',
+  '洪',
+  '曾',
+  '邱',
+  '廖',
+  '賴',
+  '周',
+];
+const GIVEN_F = [
+  '淑芬',
+  '美玲',
+  '雅婷',
+  '怡君',
+  '佳穎',
+  '詩涵',
+  '宜蓁',
+  '欣怡',
+  '惠美',
+  '靜宜',
+  '筱婷',
+  '思妤',
+];
+const GIVEN_M = [
+  '志明',
+  '俊傑',
+  '建宏',
+  '冠宇',
+  '家豪',
+  '承恩',
+  '宗翰',
+  '柏宇',
+  '文雄',
+  '國華',
+  '彥廷',
+  '士豪',
+];
 const ALLERGIES = [null, null, null, '盤尼西林', '花生', '海鮮', '阿斯匹靈'];
-const HISTORIES = [null, null, '高血壓', '第二型糖尿病', '偏頭痛', '慢性胃炎', '失眠', '過敏性鼻炎', '甲狀腺機能低下'];
+const HISTORIES = [
+  null,
+  null,
+  '高血壓',
+  '第二型糖尿病',
+  '偏頭痛',
+  '慢性胃炎',
+  '失眠',
+  '過敏性鼻炎',
+  '甲狀腺機能低下',
+];
 const TAGS = ['初診', '針灸療程', 'VIP', '長期調理', '產後調理', '失眠調理', '體重管理'];
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVXYWZIO';
 const ID_CODES: Record<string, number> = {
-  A: 10, B: 11, C: 12, D: 13, E: 14, F: 15, G: 16, H: 17, I: 34, J: 18, K: 19, L: 20, M: 21,
-  N: 22, O: 35, P: 23, Q: 24, R: 25, S: 26, T: 27, U: 28, V: 29, W: 32, X: 30, Y: 31, Z: 33,
+  A: 10,
+  B: 11,
+  C: 12,
+  D: 13,
+  E: 14,
+  F: 15,
+  G: 16,
+  H: 17,
+  I: 34,
+  J: 18,
+  K: 19,
+  L: 20,
+  M: 21,
+  N: 22,
+  O: 35,
+  P: 23,
+  Q: 24,
+  R: 25,
+  S: 26,
+  T: 27,
+  U: 28,
+  V: 29,
+  W: 32,
+  X: 30,
+  Y: 31,
+  Z: 33,
 };
 
 function fakeNationalId(gender: Gender): string {
@@ -70,11 +151,23 @@ const CLINICS = [
   { slug: 'demo-qinghe', name: '青禾中醫診所（示範）', patientCount: 12 },
 ] as const;
 
-const STAFF: { email: string; name: string; roles: Partial<Record<(typeof CLINICS)[number]['slug'], Role>> }[] = [
+const STAFF: {
+  email: string;
+  name: string;
+  roles: Partial<Record<(typeof CLINICS)[number]['slug'], Role>>;
+}[] = [
   { email: 'admin@yangbenbu.demo', name: '林雅文', roles: { 'demo-yangben': 'ADMIN' } },
-  { email: 'doctor@yangbenbu.demo', name: '陳柏翰', roles: { 'demo-yangben': 'DOCTOR', 'demo-qinghe': 'DOCTOR' } },
+  {
+    email: 'doctor@yangbenbu.demo',
+    name: '陳柏翰',
+    roles: { 'demo-yangben': 'DOCTOR', 'demo-qinghe': 'DOCTOR' },
+  },
   { email: 'frontdesk@yangbenbu.demo', name: '張曉芸', roles: { 'demo-yangben': 'FRONT_DESK' } },
-  { email: 'assistant@yangbenbu.demo', name: '黃志明', roles: { 'demo-yangben': 'CLINICAL_ASSISTANT' } },
+  {
+    email: 'assistant@yangbenbu.demo',
+    name: '黃志明',
+    roles: { 'demo-yangben': 'CLINICAL_ASSISTANT' },
+  },
   { email: 'health@yangbenbu.demo', name: '吳佩珊', roles: { 'demo-yangben': 'HEALTH_MANAGER' } },
   { email: 'admin.qinghe@yangbenbu.demo', name: '李俊宏', roles: { 'demo-qinghe': 'ADMIN' } },
 ];
@@ -117,7 +210,9 @@ async function main() {
     });
   }
 
-  console.log(`✔ 示範資料完成：${CLINICS.length} 家診所、${STAFF.length} 位員工（密碼 ${DEMO_PASSWORD}）`);
+  console.log(
+    `✔ 示範資料完成：${CLINICS.length} 家診所、${STAFF.length} 位員工（密碼 ${DEMO_PASSWORD}）`,
+  );
 }
 
 main()

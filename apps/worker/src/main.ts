@@ -9,7 +9,9 @@ const rootEnv = resolve(__dirname, '../../../.env');
 if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
 
 function log(message: string, data?: Record<string, unknown>) {
-  console.log(JSON.stringify({ time: new Date().toISOString(), service: 'worker', message, ...data }));
+  console.log(
+    JSON.stringify({ time: new Date().toISOString(), service: 'worker', message, ...data }),
+  );
 }
 
 async function main() {

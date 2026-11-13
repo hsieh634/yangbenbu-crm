@@ -14,7 +14,10 @@ export class ApiError extends Error {
 }
 
 /** 呼叫後端 API（經由 Next.js rewrite，同源，自動帶 Session cookie） */
-export async function api<T>(path: string, init: RequestInit & { json?: unknown } = {}): Promise<T> {
+export async function api<T>(
+  path: string,
+  init: RequestInit & { json?: unknown } = {},
+): Promise<T> {
   const { json, headers, ...rest } = init;
   const res = await fetch(`/api/v1${path}`, {
     ...rest,
@@ -35,7 +38,8 @@ export async function api<T>(path: string, init: RequestInit & { json?: unknown 
 
 export function queryString(params: Record<string, string | number | undefined>): string {
   const sp = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') sp.set(k, String(v));
+  for (const [k, v] of Object.entries(params))
+    if (v !== undefined && v !== '') sp.set(k, String(v));
   const s = sp.toString();
   return s ? `?${s}` : '';
 }

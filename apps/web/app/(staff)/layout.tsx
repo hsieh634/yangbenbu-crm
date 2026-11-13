@@ -16,7 +16,8 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
 
   // 診所要求兩步驟驗證但尚未設定：只能停留在設定頁
   useEffect(() => {
-    if (me?.mfaEnrollmentRequired && pathname !== '/settings/security') router.replace('/settings/security');
+    if (me?.mfaEnrollmentRequired && pathname !== '/settings/security')
+      router.replace('/settings/security');
   }, [me, pathname, router]);
 
   if (isPending || !me) {

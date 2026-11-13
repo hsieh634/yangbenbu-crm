@@ -8,7 +8,13 @@ import {
 } from '@yangbenbu/shared';
 import type { FastifyReply } from 'fastify';
 import type { AuthContext, RequestMeta } from '../../common/auth-context';
-import { AllowMfaEnrollment, AllowMfaPending, CurrentAuth, Public, ReqMeta } from '../../common/decorators';
+import {
+  AllowMfaEnrollment,
+  AllowMfaPending,
+  CurrentAuth,
+  Public,
+  ReqMeta,
+} from '../../common/decorators';
 import { ZodPipe } from '../../common/zod-validation.pipe';
 import { AuthService } from './auth.service';
 

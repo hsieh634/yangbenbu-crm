@@ -18,7 +18,9 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
 Input.displayName = 'Input';
 
 export function Label({ className, ...props }: LabelHTMLAttributes<HTMLLabelElement>) {
-  return <label className={cn('mb-1.5 block text-sm font-medium text-ink', className)} {...props} />;
+  return (
+    <label className={cn('mb-1.5 block text-sm font-medium text-ink', className)} {...props} />
+  );
 }
 
 export function FieldError({ children }: { children?: string }) {

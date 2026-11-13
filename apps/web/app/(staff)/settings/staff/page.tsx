@@ -11,7 +11,10 @@ import { api } from '@/lib/api';
 import { formatDateTime } from '@/lib/utils';
 
 function StaffList() {
-  const { data, isPending, error } = useQuery({ queryKey: ['staff'], queryFn: () => api<StaffMember[]>('/staff') });
+  const { data, isPending, error } = useQuery({
+    queryKey: ['staff'],
+    queryFn: () => api<StaffMember[]>('/staff'),
+  });
   return (
     <>
       <PageHeader title="員工帳號" description="新增員工與調整角色將於 Phase 1 開放。" />
@@ -42,8 +45,16 @@ function StaffList() {
                   <Badge tone="jade">{ROLE_LABELS[s.role]}</Badge>
                 </Td>
                 <Td className="hidden text-ink-muted md:table-cell">{s.email}</Td>
-                <Td>{s.mfaEnabled ? <Badge tone="jade">已啟用</Badge> : <Badge tone="ochre">未啟用</Badge>}</Td>
-                <Td className="hidden text-ink-muted md:table-cell">{s.lastLoginAt ? formatDateTime(s.lastLoginAt) : '—'}</Td>
+                <Td>
+                  {s.mfaEnabled ? (
+                    <Badge tone="jade">已啟用</Badge>
+                  ) : (
+                    <Badge tone="ochre">未啟用</Badge>
+                  )}
+                </Td>
+                <Td className="hidden text-ink-muted md:table-cell">
+                  {s.lastLoginAt ? formatDateTime(s.lastLoginAt) : '—'}
+                </Td>
               </tr>
             ))}
           </tbody>

@@ -11,7 +11,10 @@ export class AuditController {
 
   @Get()
   @RequirePermissions('audit:read')
-  list(@CurrentAuth() auth: AuthContext, @Query(new ZodPipe(auditLogQuerySchema)) query: AuditLogQuery) {
+  list(
+    @CurrentAuth() auth: AuthContext,
+    @Query(new ZodPipe(auditLogQuerySchema)) query: AuditLogQuery,
+  ) {
     return this.audit.list(auth.clinicId, query);
   }
 }

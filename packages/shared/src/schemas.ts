@@ -17,9 +17,7 @@ export type TotpCodeInput = z.infer<typeof totpCodeSchema>;
 
 export const switchClinicSchema = z.object({ clinicId: z.uuid() });
 
-export type LoginResult =
-  | { status: 'ok' }
-  | { status: 'mfa_required' };
+export type LoginResult = { status: 'ok' } | { status: 'mfa_required' };
 
 export interface MeResponse {
   staff: { id: string; name: string; email: string; mfaEnabled: boolean };

@@ -13,8 +13,20 @@ export function Logo({ className, inverted = false }: { className?: string; inve
         />
       </svg>
       <div className="leading-tight">
-        <div className={cn('text-[17px] font-semibold tracking-wide', inverted ? 'text-white' : 'text-ink')}>養本簿</div>
-        <div className={cn('text-[11px] tracking-[0.2em]', inverted ? 'text-jade-200' : 'text-ink-muted')}>
+        <div
+          className={cn(
+            'text-[17px] font-semibold tracking-wide',
+            inverted ? 'text-white' : 'text-ink',
+          )}
+        >
+          養本簿
+        </div>
+        <div
+          className={cn(
+            'text-[11px] tracking-[0.2em]',
+            inverted ? 'text-jade-200' : 'text-ink-muted',
+          )}
+        >
           YANGBENBU CRM
         </div>
       </div>
