@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "build": "prisma generate && tsc -p tsconfig.build.json",
+    "postinstall": "prisma generate",
     "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src prisma test",
