@@ -80,6 +80,28 @@ pnpm dev
 
 開啟 http://localhost:3000 。
 
+### Port 被佔用時
+
+前端預設 3000、API 預設 4000。如果 http://localhost:3000 打開是別的程式，代表 3000 已被佔用，可以先查是哪個程式：
+
+```bash
+# macOS / Linux
+lsof -i :3000
+```
+
+```powershell
+# Windows
+netstat -ano | findstr :3000
+```
+
+或直接讓前端改用其他 port（例如 3001）：
+
+```bash
+pnpm --filter @yangbenbu/web dev --port 3001
+```
+
+API 的 port 在 `.env` 改 `API_PORT`，同時把 `API_URL` 改成相同的 port。API 以「請求來源與請求主機是否相同」判斷同源，換 port 或換網域都不必改 `WEB_ORIGIN`。
+
 > `NEXT_PUBLIC_DEMO_MODE=true` 會在登入頁顯示示範帳號。這是建置時變數，`pnpm build` 時就要設定。
 
 ### 示範帳號
@@ -109,7 +131,7 @@ pnpm dev
 
 ## 測試
 
-共 41 個測試。API 整合測試使用**真實的 PostgreSQL**（不是 mock），因為 RLS、trigger 這類防護只有在真資料庫上才驗證得了。每次測試會在 `TEST_DATABASE_URL` 指向的伺服器上建立一個名稱唯一的暫時資料庫，測完刪除，不會動到任何既有資料庫。
+共 43 個測試。API 整合測試使用**真實的 PostgreSQL**（不是 mock），因為 RLS、trigger 這類防護只有在真資料庫上才驗證得了。每次測試會在 `TEST_DATABASE_URL` 指向的伺服器上建立一個名稱唯一的暫時資料庫，測完刪除，不會動到任何既有資料庫。
 
 涵蓋：
 

@@ -136,6 +136,28 @@ describe('Session', () => {
     expect(res.statusCode).toBe(403);
     expect(res.json().code).toBe('BAD_ORIGIN');
   });
+
+  it('同源請求放行：經 Next.js 轉發時以 x-forwarded-host 判斷（換 port、換網域、預覽都適用）', async () => {
+    for (const host of ['localhost:3001', 'crm.example-clinic.tw', 'preview.example.com']) {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/v1/auth/login',
+        headers: { origin: `https://${host}`, 'x-forwarded-host': host },
+        payload: { email: ACCOUNTS.assistant, password: DEMO_PASSWORD },
+      });
+      expect(res.statusCode).toBe(200);
+    }
+  });
+
+  it('來源主機與請求主機不同時拒絕', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/login',
+      headers: { origin: 'https://evil.example', 'x-forwarded-host': 'crm.example-clinic.tw' },
+      payload: { email: ACCOUNTS.assistant, password: DEMO_PASSWORD },
+    });
+    expect(res.statusCode).toBe(403);
+  });
 });
 
 describe('切換診所', () => {
