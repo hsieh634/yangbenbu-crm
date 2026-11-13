@@ -1,0 +1,170 @@
+// 養本簿 CRM 資料模型
+// 多租戶：所有業務資料表都有 clinic_id，並以 PostgreSQL Row-Level Security 強制隔離
+// （RLS 政策寫在 migration SQL 中，見 migrations/*_rls_and_audit）
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  DOCTOR
+  FRONT_DESK
+  CLINICAL_ASSISTANT
+  HEALTH_MANAGER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum AuditOutcome {
+  SUCCESS
+  DENIED
+  FAILURE
+}
+
+/// 診所（租戶）。不受 RLS 限制，員工登入時需要列出所屬診所。
+model Clinic {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  name      String
+  slug      String   @unique
+  timezone  String   @default("Asia/Taipei")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  memberships ClinicMembership[]
+  patients    Patient[]
+  auditLogs   AuditLog[]
+
+  @@map("clinic")
+}
+
+/// 員工帳號。一個帳號可以屬於多家診所（連鎖院所），在每家診所各有一個角色。
+model Staff {
+  id               String    @id @default(uuid(7)) @db.Uuid
+  email            String    @unique
+  name             String
+  passwordHash     String    @map("password_hash")
+  /// TOTP 金鑰（AES-256-GCM 加密）
+  totpSecretEnc    String?   @map("totp_secret_enc")
+  totpEnabled      Boolean   @default(false) @map("totp_enabled")
+  /// 最後一次使用的 TOTP 時間區段，防止同一組驗證碼被重複使用
+  totpLastUsedStep Int?      @map("totp_last_used_step")
+  failedLoginCount Int       @default(0) @map("failed_login_count")
+  lockedUntil      DateTime? @map("locked_until")
+  lastLoginAt      DateTime? @map("last_login_at")
+  isActive         Boolean   @default(true) @map("is_active")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  memberships ClinicMembership[]
+  sessions    Session[]
+
+  @@map("staff")
+}
+
+model ClinicMembership {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  clinicId  String   @map("clinic_id") @db.Uuid
+  staffId   String   @map("staff_id") @db.Uuid
+  role      Role
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  clinic Clinic @relation(fields: [clinicId], references: [id])
+  staff  Staff  @relation(fields: [staffId], references: [id])
+
+  @@unique([clinicId, staffId])
+  @@index([staffId])
+  @@map("clinic_membership")
+}
+
+/// 登入 Session。id 存的是 token 的 SHA-256，資料庫外洩也無法直接冒用。
+model Session {
+  id             String    @id
+  staffId        String    @map("staff_id") @db.Uuid
+  activeClinicId String    @map("active_clinic_id") @db.Uuid
+  /// 已通過密碼但尚未通過兩步驟驗證
+  mfaPending     Boolean   @default(false) @map("mfa_pending")
+  ip             String?
+  userAgent      String?   @map("user_agent")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  lastSeenAt     DateTime  @default(now()) @map("last_seen_at")
+  expiresAt      DateTime  @map("expires_at")
+  revokedAt      DateTime? @map("revoked_at")
+
+  staff Staff @relation(fields: [staffId], references: [id])
+
+  @@index([staffId])
+  @@map("session")
+}
+
+/// 病患。Phase 0 先建立基本欄位，用來驗證租戶隔離、欄位權限與稽核。
+model Patient {
+  /// clinic_id 預設取自目前交易的 app.clinic_id，服務層不必手動帶入
+  clinicId        String    @default(dbgenerated("(NULLIF(current_setting('app.clinic_id'::text, true), ''::text))::uuid")) @map("clinic_id") @db.Uuid
+  id              String    @id @default(uuid(7)) @db.Uuid
+  /// 病歷號（診所內唯一）
+  chartNo         String    @map("chart_no")
+  name            String
+  gender          Gender
+  birthDate       DateTime  @map("birth_date") @db.Date
+  phone           String
+  /// 身分證字號（AES-256-GCM 加密）
+  nationalIdEnc   String?   @map("national_id_enc")
+  /// 身分證字號 HMAC，用於精確查詢與防止重複建檔
+  nationalIdHash  String?   @map("national_id_hash")
+  /// 身分證末四碼，供櫃檯快速搜尋
+  nationalIdLast4 String?   @map("national_id_last4")
+  allergies       String?
+  medicalHistory  String?   @map("medical_history")
+  tags            String[]  @default([])
+  createdById     String?   @map("created_by_id") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  /// 軟刪除：病歷至少保存 7 年
+  deletedAt       DateTime? @map("deleted_at")
+
+  clinic Clinic @relation(fields: [clinicId], references: [id])
+
+  @@unique([clinicId, chartNo])
+  @@unique([clinicId, nationalIdHash])
+  @@index([clinicId, name])
+  @@index([clinicId, phone])
+  @@index([clinicId, nationalIdLast4])
+  @@map("patient")
+}
+
+/// 稽核紀錄：只能新增，資料庫 trigger 禁止 UPDATE／DELETE／TRUNCATE。
+model AuditLog {
+  id           String       @id @default(uuid(7)) @db.Uuid
+  /// 登入失敗等事件可能沒有診所
+  clinicId     String?      @map("clinic_id") @db.Uuid
+  actorStaffId String?      @map("actor_staff_id") @db.Uuid
+  actorRole    Role?        @map("actor_role")
+  action       String
+  resourceType String?      @map("resource_type")
+  resourceId   String?      @map("resource_id")
+  patientId    String?      @map("patient_id") @db.Uuid
+  outcome      AuditOutcome
+  ip           String?
+  userAgent    String?      @map("user_agent")
+  requestId    String?      @map("request_id")
+  metadata     Json?
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  clinic Clinic? @relation(fields: [clinicId], references: [id])
+
+  @@index([clinicId, createdAt(sort: Desc)])
+  @@index([clinicId, patientId, createdAt(sort: Desc)])
+  @@index([actorStaffId, createdAt(sort: Desc)])
+  @@map("audit_log")
+}

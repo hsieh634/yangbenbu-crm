@@ -1,0 +1,21 @@
+# 本機開發環境：docker compose up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      # postgres 是超級使用者，只用來初始化；應用程式使用非超級使用者 yangbenbu，
+      # 這樣 Row-Level Security 才會生效（超級使用者會略過 RLS）。
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      retries: 10
+
+volumes:
+  pgdata:
