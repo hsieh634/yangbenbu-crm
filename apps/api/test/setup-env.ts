@@ -8,4 +8,4 @@ if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
 process.env.DATABASE_URL = inject('databaseUrl');
 process.env.NODE_ENV = 'test';
 process.env.LOG_LEVEL = 'silent';
-process.env.WEB_ORIGIN = 'http://localhost:3000';
+process.env.WEB_ORIGIN = 'http://localhost:3100';

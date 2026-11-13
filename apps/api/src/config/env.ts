@@ -8,8 +8,8 @@ const bool = z
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   DATABASE_URL: z.string().min(1),
-  API_PORT: z.coerce.number().int().default(4000),
-  WEB_ORIGIN: z.string().default('http://localhost:3000'),
+  API_PORT: z.coerce.number().int().default(4100),
+  WEB_ORIGIN: z.string().default('http://localhost:3100'),
   REQUIRE_MFA: bool,
   COOKIE_SECURE: bool,
   /** 閒置多久自動登出（分鐘） */

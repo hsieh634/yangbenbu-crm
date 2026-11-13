@@ -72,35 +72,35 @@ pnpm install
 pnpm db:deploy && pnpm db:seed
 ```
 
-啟動開發伺服器（前端 3000、API 4000、Worker）：
+啟動開發伺服器（前端 3100、API 4100、Worker）：
 
 ```bash
 pnpm dev
 ```
 
-開啟 http://localhost:3000 。
+開啟 http://localhost:3100 。
 
 ### Port 被佔用時
 
-前端預設 3000、API 預設 4000。如果 http://localhost:3000 打開是別的程式，代表 3000 已被佔用，可以先查是哪個程式：
+預設使用 3100（前端）與 4100（API），刻意避開許多開發工具常用的 3000／4000。如果仍被佔用，可以先查是哪個程式：
 
 ```bash
 # macOS / Linux
-lsof -i :3000
+lsof -i :3100
 ```
 
 ```powershell
 # Windows
-netstat -ano | findstr :3000
+netstat -ano | findstr :3100
 ```
 
-或直接讓前端改用其他 port（例如 3001）：
+前端改用其他 port：
 
 ```bash
-pnpm --filter @yangbenbu/web dev --port 3001
+pnpm --filter @yangbenbu/web dev --port 3200
 ```
 
-API 的 port 在 `.env` 改 `API_PORT`，同時把 `API_URL` 改成相同的 port。API 以「請求來源與請求主機是否相同」判斷同源，換 port 或換網域都不必改 `WEB_ORIGIN`。
+API 改 port：在 `.env` 修改 `API_PORT`，並把 `API_URL` 改成相同的 port。API 以「請求來源與請求主機是否相同」判斷同源，換 port 不必改 `WEB_ORIGIN`。
 
 > `NEXT_PUBLIC_DEMO_MODE=true` 會在登入頁顯示示範帳號。這是建置時變數，`pnpm build` 時就要設定。
 
