@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Module } from '@nestjs/common';
+import { Module, RequestMethod } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 import { AuthGuard } from './common/auth.guard';
@@ -16,6 +16,8 @@ import { StaffModule } from './modules/staff/staff.module';
 @Module({
   imports: [
     LoggerModule.forRoot({
+      // Nest 11 的路由語法：萬用字元需具名（預設的 '*' 會產生警告）
+      forRoutes: [{ path: '{*path}', method: RequestMethod.ALL }],
       pinoHttp: {
         level: env().LOG_LEVEL,
         genReqId: (req) => (req.headers['x-request-id'] as string | undefined) ?? randomUUID(),

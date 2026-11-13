@@ -1,0 +1,42 @@
+@import 'tailwindcss';
+
+/*
+ * 養本簿設計語彙：
+ * 墨綠（主色，沉穩、草本）、米白（底色，紙張感）、赭石（強調色，溫暖）。
+ */
+@theme {
+  --font-sans: 'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei', system-ui, sans-serif;
+
+  --color-paper: #f7f5f0;
+  --color-surface: #ffffff;
+  --color-ink: #1f2a26;
+  --color-ink-muted: #5d6b65;
+  --color-line: #e3dfd5;
+
+  --color-jade-50: #eef5f1;
+  --color-jade-100: #d6e8de;
+  --color-jade-200: #aed1bf;
+  --color-jade-500: #3f7d64;
+  --color-jade-600: #2f6650;
+  --color-jade-700: #255241;
+  --color-jade-800: #1f3d34;
+  --color-jade-900: #172e27;
+
+  --color-ochre-100: #f6ead6;
+  --color-ochre-500: #b9803a;
+  --color-ochre-700: #8a5a22;
+
+  --color-danger: #b4402f;
+  --color-danger-soft: #f8e5e1;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-feature-settings: 'palt';
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-jade-500);
+  outline-offset: 2px;
+}

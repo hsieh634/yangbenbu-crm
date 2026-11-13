@@ -89,6 +89,8 @@ export interface AuditLogEntry {
   resourceType: string | null;
   resourceId: string | null;
   patientId: string | null;
+  /** 病患姓名與病歷號（同一診所內解析，病患已刪除時為 null） */
+  patient: { id: string; name: string; chartNo: string } | null;
   outcome: 'SUCCESS' | 'DENIED' | 'FAILURE';
   ip: string | null;
   metadata: Record<string, unknown> | null;

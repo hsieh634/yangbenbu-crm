@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-retries 10
+
+    env:
+      TURBO_TELEMETRY_DISABLED: 1
+      NEXT_TELEMETRY_DISABLED: 1
+      # 非超級使用者，RLS 才會生效（見 scripts/init-db.sql）
+      DATABASE_URL: postgresql://yangbenbu:yangbenbu@localhost:5432/yangbenbu
+      TEST_DATABASE_URL: postgresql://yangbenbu:yangbenbu@localhost:5432/yangbenbu_test
+      # 僅供 CI 測試使用的隨機金鑰，與任何環境無關
+      FIELD_ENCRYPTION_KEY: Y2ktb25seS1maWVsZC1lbmNyeXB0aW9uLWtleS0zMmI=
+      FIELD_HASH_KEY: Y2ktb25seS1maWVsZC1oYXNoLWtleS0zMmJ5dGVzISE=
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 安裝套件
+        run: pnpm install --frozen-lockfile
+
+      - name: 建立資料庫角色
+        run: psql postgresql://postgres:postgres@localhost:5432/postgres -f scripts/init-db.sql
+
+      - name: Lint、型別檢查、建置
+        run: pnpm turbo run lint typecheck build
+
+      - name: 套用 migration（確認可以從零部署）
+        run: pnpm db:deploy
+
+      - name: 測試
+        run: pnpm turbo run test

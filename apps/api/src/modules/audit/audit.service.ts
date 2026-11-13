@@ -67,8 +67,8 @@ export class AuditService {
       patientId: query.patientId,
       actorStaffId: query.actorStaffId,
     };
-    const [total, rows] = await this.prisma.tenant(clinicId, (tx) =>
-      Promise.all([
+    const { total, rows, patients } = await this.prisma.tenant(clinicId, async (tx) => {
+      const [total, rows] = await Promise.all([
         tx.auditLog.count({ where }),
         tx.auditLog.findMany({
           where,
@@ -76,8 +76,15 @@ export class AuditService {
           skip: (query.page - 1) * query.pageSize,
           take: query.pageSize,
         }),
-      ]),
-    );
+      ]);
+      // 病患姓名在同一個租戶交易內查詢，只會解析出本診所的病患
+      const patientIds = [...new Set(rows.map((r) => r.patientId).filter((v): v is string => !!v))];
+      const patients = await tx.patient.findMany({
+        where: { id: { in: patientIds } },
+        select: { id: true, name: true, chartNo: true },
+      });
+      return { total, rows, patients: new Map(patients.map((p) => [p.id, p])) };
+    });
 
     const actorIds = [...new Set(rows.map((r) => r.actorStaffId).filter((v): v is string => !!v))];
     const actors = await this.prisma.staff.findMany({
@@ -99,6 +106,7 @@ export class AuditService {
         resourceType: r.resourceType,
         resourceId: r.resourceId,
         patientId: r.patientId,
+        patient: r.patientId ? (patients.get(r.patientId) ?? null) : null,
         outcome: r.outcome,
         ip: r.ip,
         metadata: (r.metadata as Record<string, unknown> | null) ?? null,

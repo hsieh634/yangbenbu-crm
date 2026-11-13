@@ -96,10 +96,11 @@ describe('稽核紀錄', () => {
     const cookie = await login(app, ACCOUNTS.admin);
     const res = await app.inject({ method: 'GET', url: `/api/v1/audit-logs?patientId=${patientId}`, headers: { cookie } });
     expect(res.statusCode).toBe(200);
-    const items = res.json().items as { patientId: string; actor: { name: string } }[];
+    const items = res.json().items as { patientId: string; patient: { id: string; chartNo: string }; actor: { name: string } }[];
     expect(items.length).toBeGreaterThan(0);
     expect(items.every((i) => i.patientId === patientId)).toBe(true);
     expect(items[0]!.actor.name).toBeTruthy();
+    expect(items[0]!.patient).toMatchObject({ id: patientId, chartNo: 'P00001' });
   });
 
   it('其他診所的管理者看不到這些紀錄', async () => {
