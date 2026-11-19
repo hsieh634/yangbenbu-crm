@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { loginSchema, type LoginResult } from '@yangbenbu/shared';
 import { LogIn } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -24,6 +24,12 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  // 示範站才顯示示範帳號；由 API 的 DEMO_MODE 決定，不需要重新建置前端
+  const { data: options } = useQuery({
+    queryKey: ['auth', 'options'],
+    queryFn: () => api<{ demoMode: boolean }>('/auth/options'),
+    staleTime: Infinity,
+  });
   const login = useMutation({
     mutationFn: (input: { email: string; password: string }) =>
       api<LoginResult>('/auth/login', { method: 'POST', json: input }),
@@ -95,7 +101,7 @@ function LoginForm() {
         </Button>
       </form>
 
-      {process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && (
+      {options?.demoMode && (
         <DemoAccounts
           onPick={(picked) => {
             setEmail(picked);

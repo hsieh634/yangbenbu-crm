@@ -82,7 +82,8 @@ const GIVEN_M = [
   '彥廷',
   '士豪',
 ];
-const ALLERGIES = [null, null, null, null, '盤尼西林', '花生', '海鮮', '阿斯匹靈'];
+// 約兩成病患有過敏史
+const ALLERGIES = [...Array<null>(14).fill(null), '盤尼西林', '花生', '海鮮', '阿斯匹靈'];
 const HISTORIES = [
   null,
   null,
@@ -795,7 +796,7 @@ export async function runDemoTick(
       created += await withTenant(
         prisma,
         ctx.id,
-        (tx) => generateDay(tx, ctx, date, d === 0 ? 0.4 : 0.3),
+        (tx) => generateDay(tx, ctx, date, d === 0 ? 0.6 : 0.3),
         LONG_TX,
       );
     }

@@ -3,25 +3,30 @@
 import { ROLE_LABELS, type Role } from '@yangbenbu/shared';
 
 const DEMO_ACCOUNTS: { email: string; name: string; role: Role; note: string }[] = [
-  { email: 'admin@yangbenbu.demo', name: '林雅文', role: 'ADMIN', note: '可看稽核紀錄、員工管理' },
-  { email: 'doctor@yangbenbu.demo', name: '陳柏翰', role: 'DOCTOR', note: '同時屬於兩家診所' },
+  {
+    email: 'admin@yangbenbu.demo',
+    name: '林雅文',
+    role: 'ADMIN',
+    note: '診所設定、稽核紀錄、員工帳號',
+  },
+  { email: 'doctor@yangbenbu.demo', name: '陳柏翰', role: 'DOCTOR', note: '填寫醫師欄位；同時屬於兩家診所' },
   {
     email: 'frontdesk@yangbenbu.demo',
     name: '張曉芸',
     role: 'FRONT_DESK',
-    note: '可查看完整身分證字號',
+    note: '預約、報到、扣堂；看不到醫師欄位',
   },
   {
     email: 'assistant@yangbenbu.demo',
     name: '黃志明',
     role: 'CLINICAL_ASSISTANT',
-    note: '權限最少',
+    note: '推進看板、登記療程；不能編輯病患',
   },
   {
     email: 'health@yangbenbu.demo',
     name: '吳佩珊',
     role: 'HEALTH_MANAGER',
-    note: '看不到身分證字號',
+    note: '看板唯讀；看不到地址與身分證',
   },
 ];
 

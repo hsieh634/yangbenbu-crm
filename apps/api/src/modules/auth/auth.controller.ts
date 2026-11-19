@@ -16,11 +16,19 @@ import {
   ReqMeta,
 } from '../../common/decorators';
 import { ZodPipe } from '../../common/zod-validation.pipe';
+import { env } from '../../config/env';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
+
+  /** 登入頁需要的公開設定（執行期決定，不必重新建置前端） */
+  @Public()
+  @Get('options')
+  options(): { demoMode: boolean } {
+    return { demoMode: env().DEMO_MODE };
+  }
 
   @Public()
   @Post('login')

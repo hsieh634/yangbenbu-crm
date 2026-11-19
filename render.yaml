@@ -1,0 +1,28 @@
+# Render Blueprint：公開示範站（單一容器：前端 + API + Worker）
+# 使用方式見 docs/04-部署.md。資料庫使用 Neon（免費方案），連線字串於建立時填入。
+services:
+  - type: web
+    name: yangbenbu-demo
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /login
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      # Render 產生隨機 256 位元值（base64），正好是欄位加密需要的 32 bytes
+      - key: FIELD_ENCRYPTION_KEY
+        generateValue: true
+      - key: FIELD_HASH_KEY
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: 'true'
+      - key: DEMO_MODE
+        value: 'true'
+      - key: REQUIRE_MFA
+        value: 'false'
+      - key: LOG_LEVEL
+        value: info

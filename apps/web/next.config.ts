@@ -4,6 +4,8 @@ const apiUrl = process.env.API_URL ?? 'http://localhost:4100';
 
 const config: NextConfig = {
   poweredByHeader: false,
+  // 開發模式右下角的 Next.js 標示會蓋住側邊選單底部的說明文字
+  devIndicators: false,
   // 前端與 API 同源：瀏覽器只跟 Next.js 溝通，/api/* 轉發到後端。
   // 這樣 Session cookie 可以使用 SameSite=Strict，也不需要開放 CORS。
   async rewrites() {

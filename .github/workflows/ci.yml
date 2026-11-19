@@ -2,7 +2,6 @@ name: CI
 
 on:
   push:
-    branches: [main]
   pull_request:
 
 concurrency:
@@ -60,3 +59,21 @@ jobs:
 
       - name: 測試
         run: pnpm turbo run test
+
+      - name: 示範資料（確認可以從零產生：45 天歷史、今天起一週預約）
+        run: pnpm db:seed
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: 建置示範站映像（確認 Dockerfile 可用）
+        run: docker build --target demo -t yangbenbu-demo .
+
+      - name: 建置正式環境映像（API、Worker、前端）
+        run: |
+          docker build --target api -t yangbenbu-api .
+          docker build --target worker -t yangbenbu-worker .
+          docker build --target web --build-arg API_URL=http://api:4100 -t yangbenbu-web .
