@@ -6,6 +6,7 @@ import {
   KeyRound,
   LineChart,
   ScrollText,
+  Settings2,
   Users,
   UserCog,
   type LucideIcon,
@@ -24,15 +25,9 @@ export interface NavItem {
 export const NAV_SECTIONS: { title?: string; items: NavItem[] }[] = [
   {
     items: [
-      { href: '/board', label: '今日看板', icon: KanbanSquare, permission: 'board:read', phase: 1 },
+      { href: '/board', label: '今日看板', icon: KanbanSquare, permission: 'board:read' },
       { href: '/patients', label: '病患', icon: Users, permission: 'patient:read' },
-      {
-        href: '/appointments',
-        label: '預約',
-        icon: CalendarDays,
-        permission: 'appointment:read',
-        phase: 1,
-      },
+      { href: '/appointments', label: '預約', icon: CalendarDays, permission: 'appointment:read' },
       {
         href: '/follow-ups',
         label: '診後追蹤',
@@ -46,6 +41,7 @@ export const NAV_SECTIONS: { title?: string; items: NavItem[] }[] = [
   {
     title: '管理',
     items: [
+      { href: '/settings/clinic', label: '診所設定', icon: Settings2, permission: 'settings:manage' },
       { href: '/settings/staff', label: '員工帳號', icon: UserCog, permission: 'staff:manage' },
       { href: '/audit', label: '稽核紀錄', icon: ScrollText, permission: 'audit:read' },
       { href: '/settings/security', label: '帳號安全', icon: KeyRound },
