@@ -9,7 +9,12 @@ const DEMO_ACCOUNTS: { email: string; name: string; role: Role; note: string }[]
     role: 'ADMIN',
     note: '診所設定、稽核紀錄、員工帳號',
   },
-  { email: 'doctor@yangbenbu.demo', name: '陳柏翰', role: 'DOCTOR', note: '填寫醫師欄位；同時屬於兩家診所' },
+  {
+    email: 'doctor@yangbenbu.demo',
+    name: '陳柏翰',
+    role: 'DOCTOR',
+    note: '填寫醫師欄位；同時屬於兩家診所',
+  },
   {
     email: 'frontdesk@yangbenbu.demo',
     name: '張曉芸',

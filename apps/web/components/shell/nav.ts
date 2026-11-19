@@ -41,7 +41,12 @@ export const NAV_SECTIONS: { title?: string; items: NavItem[] }[] = [
   {
     title: '管理',
     items: [
-      { href: '/settings/clinic', label: '診所設定', icon: Settings2, permission: 'settings:manage' },
+      {
+        href: '/settings/clinic',
+        label: '診所設定',
+        icon: Settings2,
+        permission: 'settings:manage',
+      },
       { href: '/settings/staff', label: '員工帳號', icon: UserCog, permission: 'staff:manage' },
       { href: '/audit', label: '稽核紀錄', icon: ScrollText, permission: 'audit:read' },
       { href: '/settings/security', label: '帳號安全', icon: KeyRound },

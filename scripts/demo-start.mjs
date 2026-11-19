@@ -35,7 +35,15 @@ const children = [
   ['worker', ['apps/worker/dist/main.js']],
   [
     'web',
-    ['apps/web/node_modules/next/dist/bin/next', 'start', 'apps/web', '--port', PORT, '--hostname', '0.0.0.0'],
+    [
+      'apps/web/node_modules/next/dist/bin/next',
+      'start',
+      'apps/web',
+      '--port',
+      PORT,
+      '--hostname',
+      '0.0.0.0',
+    ],
   ],
 ].map(([name, args]) => {
   const child = spawn('node', args, { stdio: 'inherit', env });
@@ -52,9 +60,9 @@ function shutdown(code = 0) {
   stopping = true;
   for (const c of children) if (c.exitCode === null) c.kill('SIGTERM');
   setTimeout(() => process.exit(code), 10_000).unref();
-  Promise.all(children.map((c) => (c.exitCode !== null ? null : new Promise((r) => c.on('exit', r))))).then(
-    () => process.exit(code),
-  );
+  Promise.all(
+    children.map((c) => (c.exitCode !== null ? null : new Promise((r) => c.on('exit', r)))),
+  ).then(() => process.exit(code));
 }
 process.on('SIGTERM', () => shutdown(0));
 process.on('SIGINT', () => shutdown(0));

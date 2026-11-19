@@ -32,7 +32,8 @@ export function useBoardStream(enabled: boolean): StreamState {
       setState('offline');
       void queryClient.invalidateQueries({ queryKey: ['board'] }); // 觸發 401 → 導回登入頁
     });
-    source.onerror = () => setState(source.readyState === EventSource.CLOSED ? 'offline' : 'connecting');
+    source.onerror = () =>
+      setState(source.readyState === EventSource.CLOSED ? 'offline' : 'connecting');
     return () => source.close();
   }, [enabled, queryClient]);
 
