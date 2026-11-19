@@ -16,6 +16,8 @@ const envSchema = z.object({
   SESSION_IDLE_MINUTES: z.coerce.number().int().positive().default(30),
   /** Session 最長有效時間（小時），閒置未逾時也必須重新登入 */
   SESSION_ABSOLUTE_HOURS: z.coerce.number().int().positive().default(12),
+  /** 公開示範站：停用會影響其他訪客的操作（例如替示範帳號啟用兩步驟驗證） */
+  DEMO_MODE: bool,
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 });
 

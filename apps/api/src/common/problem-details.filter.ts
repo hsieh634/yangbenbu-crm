@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { Prisma } from '@yangbenbu/db';
 import type { ProblemDetails } from '@yangbenbu/shared';
 import type { FastifyReply } from 'fastify';
 
@@ -44,6 +45,18 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         errors: Array.isArray(extra.errors)
           ? (extra.errors as ProblemDetails['errors'])
           : undefined,
+      };
+    } else if (
+      exception instanceof Prisma.PrismaClientKnownRequestError &&
+      exception.code === 'P2002'
+    ) {
+      // 唯一鍵衝突：多半是兩個請求同時建立同一筆資料，服務層的檢查已先處理常見情況
+      problem = {
+        type: 'about:blank',
+        title: TITLES[409]!,
+        status: HttpStatus.CONFLICT,
+        detail: '資料已存在或已被其他人更新，請重新整理後再試',
+        code: 'CONFLICT',
       };
     } else {
       this.logger.error(exception);

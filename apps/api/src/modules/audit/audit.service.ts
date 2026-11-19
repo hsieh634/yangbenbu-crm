@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { type AuditOutcome, type Prisma, type Role, type TenantTx } from '@yangbenbu/db';
 import type { AuditLogEntry, AuditLogQuery, Paginated } from '@yangbenbu/shared';
-import type { RequestMeta } from '../../common/auth-context';
+import type { AuthContext, RequestMeta } from '../../common/auth-context';
 import { PrismaService } from '../../common/prisma.service';
 
 export interface AuditEntry {
@@ -46,6 +46,34 @@ export class AuditService {
    */
   async recordInTx(tx: TenantTx, entry: AuditEntry): Promise<void> {
     await tx.auditLog.create({ data: this.toData(entry) });
+  }
+
+  /** 以目前登入者身分寫入（業務操作的常用寫法） */
+  async log(
+    tx: TenantTx,
+    auth: AuthContext,
+    meta: RequestMeta,
+    action: string,
+    data: {
+      resourceType: string;
+      resourceId?: string;
+      patientId?: string;
+      metadata?: Prisma.InputJsonValue;
+      outcome?: AuditOutcome;
+    },
+  ): Promise<void> {
+    await this.recordInTx(tx, {
+      clinicId: auth.clinicId,
+      actorStaffId: auth.staffId,
+      actorRole: auth.role,
+      action,
+      outcome: data.outcome ?? 'SUCCESS',
+      resourceType: data.resourceType,
+      resourceId: data.resourceId,
+      patientId: data.patientId,
+      metadata: data.metadata,
+      meta,
+    });
   }
 
   /** 獨立寫入（登入事件、權限拒絕等），失敗只記錄錯誤、不影響回應 */

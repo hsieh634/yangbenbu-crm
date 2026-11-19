@@ -31,6 +31,46 @@ enum AuditOutcome {
   FAILURE
 }
 
+enum ServiceCategory {
+  CONSULTATION
+  ACUPUNCTURE
+  TUINA
+  CUPPING
+  MOXIBUSTION
+  OTHER
+}
+
+enum AppointmentStatus {
+  BOOKED
+  CONFIRMED
+  CHECKED_IN
+  NO_SHOW
+  CANCELLED
+}
+
+enum AppointmentSource {
+  FRONT_DESK
+  PHONE
+  LINE
+  WALK_IN
+}
+
+/// 就診狀態（今日看板的欄位）。「已預約」是尚未報到的預約，不是就診單的狀態。
+enum VisitStatus {
+  CHECKED_IN
+  WAITING
+  IN_CONSULTATION
+  IN_TREATMENT
+  PENDING_CHECKOUT
+  COMPLETED
+  CANCELLED
+}
+
+enum PackageUsageKind {
+  DEDUCT
+  REVERSAL
+}
+
 /// 診所（租戶）。不受 RLS 限制，員工登入時需要列出所屬診所。
 model Clinic {
   id        String   @id @default(uuid(7)) @db.Uuid
@@ -65,8 +105,11 @@ model Staff {
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
 
-  memberships ClinicMembership[]
-  sessions    Session[]
+  memberships      ClinicMembership[]
+  sessions         Session[]
+  schedules        DoctorSchedule[]
+  appointmentsAsDr Appointment[]      @relation("AppointmentDoctor")
+  visitsAsDr       Visit[]            @relation("VisitDoctor")
 
   @@map("staff")
 }
@@ -107,33 +150,51 @@ model Session {
   @@map("session")
 }
 
-/// 病患。Phase 0 先建立基本欄位，用來驗證租戶隔離、欄位權限與稽核。
+/// 病患。病史與過敏屬特種個資，以 AES-256-GCM 加密儲存。
 model Patient {
   /// clinic_id 預設取自目前交易的 app.clinic_id，服務層不必手動帶入
-  clinicId        String    @default(dbgenerated("(NULLIF(current_setting('app.clinic_id'::text, true), ''::text))::uuid")) @map("clinic_id") @db.Uuid
-  id              String    @id @default(uuid(7)) @db.Uuid
-  /// 病歷號（診所內唯一）
-  chartNo         String    @map("chart_no")
-  name            String
-  gender          Gender
-  birthDate       DateTime  @map("birth_date") @db.Date
-  phone           String
+  clinicId              String    @default(dbgenerated("(NULLIF(current_setting('app.clinic_id'::text, true), ''::text))::uuid")) @map("clinic_id") @db.Uuid
+  id                    String    @id @default(uuid(7)) @db.Uuid
+  /// 病歷號（診所內唯一；未填時自動編號）
+  chartNo               String    @map("chart_no")
+  name                  String
+  gender                Gender
+  birthDate             DateTime  @map("birth_date") @db.Date
+  phone                 String
+  email                 String?
+  address               String?
+  emergencyContactName  String?   @map("emergency_contact_name")
+  emergencyContactPhone String?   @map("emergency_contact_phone")
+  /// 來源管道（介紹、網路、路過……）
+  source                String?
   /// 身分證字號（AES-256-GCM 加密）
-  nationalIdEnc   String?   @map("national_id_enc")
+  nationalIdEnc         String?   @map("national_id_enc")
   /// 身分證字號 HMAC，用於精確查詢與防止重複建檔
-  nationalIdHash  String?   @map("national_id_hash")
+  nationalIdHash        String?   @map("national_id_hash")
   /// 身分證末四碼，供櫃檯快速搜尋
-  nationalIdLast4 String?   @map("national_id_last4")
-  allergies       String?
-  medicalHistory  String?   @map("medical_history")
-  tags            String[]  @default([])
-  createdById     String?   @map("created_by_id") @db.Uuid
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  nationalIdLast4       String?   @map("national_id_last4")
+  /// 過敏史（加密）
+  allergiesEnc          String?   @map("allergies_enc")
+  /// 是否有過敏史：看板卡片要顯示過敏標記，但不需要解密內容
+  hasAllergy            Boolean   @default(false) @map("has_allergy")
+  /// 既往病史（加密）
+  medicalHistoryEnc     String?   @map("medical_history_enc")
+  tags                  String[]  @default([])
+  /// 個資同意書簽署時間與版本
+  consentSignedAt       DateTime? @map("consent_signed_at")
+  consentVersion        String?   @map("consent_version")
+  createdById           String?   @map("created_by_id") @db.Uuid
+  updatedById           String?   @map("updated_by_id") @db.Uuid
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
   /// 軟刪除：病歷至少保存 7 年
-  deletedAt       DateTime? @map("deleted_at")
+  deletedAt             DateTime? @map("deleted_at")
 
-  clinic Clinic @relation(fields: [clinicId], references: [id])
+  clinic       Clinic               @relation(fields: [clinicId], references: [id])
+  appointments Appointment[]
+  visits       Visit[]
+  packages     PatientPackage[]
+  dispenses    MedicationDispense[]
 
   @@unique([clinicId, chartNo])
   @@unique([clinicId, nationalIdHash])
@@ -167,4 +228,295 @@ model AuditLog {
   @@index([clinicId, patientId, createdAt(sort: Desc)])
   @@index([actorStaffId, createdAt(sort: Desc)])
   @@map("audit_log")
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Phase 1：診所設定、排班與預約、就診、療程、領藥
+// 以下每張表都有 clinic_id 並受 RLS 限制；clinic_id 預設取自交易設定。
+// ════════════════════════════════════════════════════════════════════
+
+/// 診間
+model Room {
+  clinicId  String   @default(dbgenerated("(NULLIF(current_setting('app.clinic_id'::text, true), ''::text))::uuid")) @map("clinic_id") @db.Uuid
+  id        String   @id @default(uuid(7)) @db.Uuid
+  name      String
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([clinicId, name])
+  @@map("room")
+}
+
+/// 服務項目（看診、針灸、推拿……）
+model Service {
+  clinicId        String          @default(dbgenerated("(NULLIF(current_setting('app.clinic_id'::text, true), ''::text))::uuid")) @map("clinic_id") @db.Uuid
+  id              String          @id @default(uuid(7)) @db.Uuid
+  code            String
+  name            String
+  category        ServiceCategory
+  durationMinutes Int             @map("duration_minutes")
+  sortOrder       Int             @default(0) @map("sort_order")
+  isActive        Boolean         @default(true) @map("is_active")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  packagePlans PackagePlan[]
+
+  @@unique([clinicId, code])
+  @@map("service")
+}
+
+/// 療程方案範本（例如「針灸 10 堂」）
+model PackagePlan {
+  clinicId  String   @default(dbgenerated("(NULLIF(current_setting('app.clinic_id'::text, true), ''::text))::uuid")) @map("clinic_id") @db.Uuid
+  id        String   @id @default(uuid(7)) @db.Uuid
+  name      String
+  /// 這個療程可抵用的服務項目
+  serviceId String   @map("service_id") @db.Uuid
+  sessions  Int
+  validDays Int      @map("valid_days")
+  /// 新台幣（元）
+  price     Int
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  service Service @relation(fields: [serviceId], references: [id])
+
+  @@index([clinicId, serviceId])
+  @@map("package_plan")
+}
+
+/// 醫師每週排班：某個星期幾的門診時段，切成固定長度的預約時段
+model DoctorSchedule {
+  clinicId    String   @default(dbgenerated("(NULLIF(current_setting('app.clinic_id'::text, true), ''::text))::uuid")) @map("clinic_id") @db.Uuid
+  id          String   @id @default(uuid(7)) @db.Uuid
+  doctorId    String   @map("doctor_id") @db.Uuid
+  /// 0 = 星期日 … 6 = 星期六
+  weekday     Int
+  /// 開始、結束時間（從 00:00 起算的分鐘數，診所當地時間）
+  startMinute Int      @map("start_minute")
+  endMinute   Int      @map("end_minute")
+  slotMinutes Int      @map("slot_minutes")
+  /// 每個時段可預約人數
+  capacity    Int
+  roomId      String?  @map("room_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  doctor Staff @relation(fields: [doctorId], references: [id])
+
+  @@index([clinicId, doctorId, weekday])
+  @@map("doctor_schedule")
+}
+
+/// 休診日（doctorId 為空代表全院休診）
+model ScheduleClosure {
+  clinicId    String   @default(dbgenerated("(NULLIF(current_setting('app.clinic_id'::text, true), ''::text))::uuid")) @map("clinic_id") @db.Uuid
+  id          String   @id @default(uuid(7)) @db.Uuid
+  date        DateTime @db.Date
+  doctorId    String?  @map("doctor_id") @db.Uuid
+  reason      String?
+  createdById String?  @map("created_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([clinicId, date])
+  @@map("schedule_closure")
+}
+
+model Appointment {
+  clinicId     String            @default(dbgenerated("(NULLIF(current_setting('app.clinic_id'::text, true), ''::text))::uuid")) @map("clinic_id") @db.Uuid
+  id           String            @id @default(uuid(7)) @db.Uuid
+  patientId    String            @map("patient_id") @db.Uuid
+  doctorId     String            @map("doctor_id") @db.Uuid
+  serviceId    String?           @map("service_id") @db.Uuid
+  roomId       String?           @map("room_id") @db.Uuid
+  startAt      DateTime          @map("start_at")
+  endAt        DateTime          @map("end_at")
+  status       AppointmentStatus @default(BOOKED)
+  source       AppointmentSource @default(FRONT_DESK)
+  note         String?
+  cancelReason String?           @map("cancel_reason")
+  cancelledAt  DateTime?         @map("cancelled_at")
+  /// 示範資料產生器建立的預約（每日補資料時用來判斷是否已產生）
+  isDemo       Boolean           @default(false) @map("is_demo")
+  createdById  String?           @map("created_by_id") @db.Uuid
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+  doctor  Staff   @relation("AppointmentDoctor", fields: [doctorId], references: [id])
+  visit   Visit?
+
+  @@index([clinicId, startAt])
+  @@index([clinicId, doctorId, startAt])
+  @@index([clinicId, patientId, startAt])
+  @@map("appointment")
+}
+
+/// 就診單：報到時建立，是今日看板的資料來源
+model Visit {
+  clinicId                String      @default(dbgenerated("(NULLIF(current_setting('app.clinic_id'::text, true), ''::text))::uuid")) @map("clinic_id") @db.Uuid
+  id                      String      @id @default(uuid(7)) @db.Uuid
+  patientId               String      @map("patient_id") @db.Uuid
+  /// 現場掛號（沒有預約）時為空
+  appointmentId           String?     @unique @map("appointment_id") @db.Uuid
+  doctorId                String?     @map("doctor_id") @db.Uuid
+  roomId                  String?     @map("room_id") @db.Uuid
+  /// 就診日（診所當地日期），看板依此查詢
+  visitDate               DateTime    @map("visit_date") @db.Date
+  status                  VisitStatus @default(CHECKED_IN)
+  statusChangedAt         DateTime    @default(now()) @map("status_changed_at")
+  checkedInAt             DateTime    @default(now()) @map("checked_in_at")
+  completedAt             DateTime?   @map("completed_at")
+  /// 醫師欄位（主訴、四診摘要、證型、治則、醫囑）以 JSON 加密儲存
+  clinicalNoteEnc         String?     @map("clinical_note_enc")
+  clinicalNoteUpdatedAt   DateTime?   @map("clinical_note_updated_at")
+  clinicalNoteUpdatedById String?     @map("clinical_note_updated_by_id") @db.Uuid
+  /// HIS 就診序號，對照正式病歷用
+  hisVisitNo              String?     @map("his_visit_no")
+  createdById             String?     @map("created_by_id") @db.Uuid
+  createdAt               DateTime    @default(now()) @map("created_at")
+  updatedAt               DateTime    @updatedAt @map("updated_at")
+
+  patient     Patient        @relation(fields: [patientId], references: [id])
+  appointment Appointment?   @relation(fields: [appointmentId], references: [id])
+  doctor      Staff?         @relation("VisitDoctor", fields: [doctorId], references: [id])
+  events      VisitEvent[]
+  services    VisitService[]
+  handoffs    HandoffNote[]
+
+  @@index([clinicId, visitDate])
+  @@index([clinicId, patientId, checkedInAt(sort: Desc)])
+  @@map("visit")
+}
+
+/// 就診狀態轉換紀錄（只能新增）。用來追溯誰在何時推進，以及計算各階段等候時間。
+model VisitEvent {
+  clinicId   String       @default(dbgenerated("(NULLIF(current_setting('app.clinic_id'::text, true), ''::text))::uuid")) @map("clinic_id") @db.Uuid
+  id         String       @id @default(uuid(7)) @db.Uuid
+  visitId    String       @map("visit_id") @db.Uuid
+  fromStatus VisitStatus? @map("from_status")
+  toStatus   VisitStatus  @map("to_status")
+  actorId    String?      @map("actor_id") @db.Uuid
+  note       String?
+  createdAt  DateTime     @default(now()) @map("created_at")
+
+  visit Visit @relation(fields: [visitId], references: [id])
+
+  @@index([clinicId, visitId, createdAt])
+  @@map("visit_event")
+}
+
+/// 本次就診的服務項目。若病患有可抵用的療程，新增時自動扣堂、移除時自動沖銷。
+model VisitService {
+  clinicId       String    @default(dbgenerated("(NULLIF(current_setting('app.clinic_id'::text, true), ''::text))::uuid")) @map("clinic_id") @db.Uuid
+  id             String    @id @default(uuid(7)) @db.Uuid
+  visitId        String    @map("visit_id") @db.Uuid
+  serviceId      String    @map("service_id") @db.Uuid
+  packageUsageId String?   @unique @map("package_usage_id") @db.Uuid
+  createdById    String?   @map("created_by_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at")
+  removedAt      DateTime? @map("removed_at")
+  removedById    String?   @map("removed_by_id") @db.Uuid
+
+  visit Visit @relation(fields: [visitId], references: [id])
+
+  @@index([clinicId, visitId])
+  @@map("visit_service")
+}
+
+/// 交接備註：留給下一個職務的訊息（例如「左肩針灸後請熱敷 10 分鐘」）
+model HandoffNote {
+  clinicId     String    @default(dbgenerated("(NULLIF(current_setting('app.clinic_id'::text, true), ''::text))::uuid")) @map("clinic_id") @db.Uuid
+  id           String    @id @default(uuid(7)) @db.Uuid
+  visitId      String    @map("visit_id") @db.Uuid
+  authorId     String?   @map("author_id") @db.Uuid
+  /// 指定給哪個職務；空值代表所有人
+  targetRole   Role?     @map("target_role")
+  body         String
+  createdAt    DateTime  @default(now()) @map("created_at")
+  resolvedAt   DateTime? @map("resolved_at")
+  resolvedById String?   @map("resolved_by_id") @db.Uuid
+
+  visit Visit @relation(fields: [visitId], references: [id])
+
+  @@index([clinicId, visitId])
+  @@map("handoff_note")
+}
+
+/// 病患購買的療程。剩餘堂數 = 總堂數 − 扣堂紀錄加總，不另存，帳一定對得起來。
+model PatientPackage {
+  clinicId      String   @default(dbgenerated("(NULLIF(current_setting('app.clinic_id'::text, true), ''::text))::uuid")) @map("clinic_id") @db.Uuid
+  id            String   @id @default(uuid(7)) @db.Uuid
+  patientId     String   @map("patient_id") @db.Uuid
+  planId        String?  @map("plan_id") @db.Uuid
+  /// 以下為購買當下的快照，方案之後改價或停用不影響已售出的療程
+  name          String
+  serviceId     String   @map("service_id") @db.Uuid
+  totalSessions Int      @map("total_sessions")
+  price         Int
+  purchasedOn   DateTime @map("purchased_on") @db.Date
+  expiresOn     DateTime @map("expires_on") @db.Date
+  note          String?
+  createdById   String?  @map("created_by_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  patient Patient        @relation(fields: [patientId], references: [id])
+  usages  PackageUsage[]
+
+  @@index([clinicId, patientId])
+  @@map("patient_package")
+}
+
+/// 扣堂紀錄（只能新增）。沖銷是新增一筆 quantity = -1 的紀錄，指向被沖銷的那筆。
+model PackageUsage {
+  clinicId       String           @default(dbgenerated("(NULLIF(current_setting('app.clinic_id'::text, true), ''::text))::uuid")) @map("clinic_id") @db.Uuid
+  id             String           @id @default(uuid(7)) @db.Uuid
+  packageId      String           @map("package_id") @db.Uuid
+  patientId      String           @map("patient_id") @db.Uuid
+  visitId        String?          @map("visit_id") @db.Uuid
+  kind           PackageUsageKind
+  /// 扣堂 +1、沖銷 -1
+  quantity       Int
+  reason         String?
+  /// 沖銷哪一筆（每筆只能被沖銷一次）
+  reversalOfId   String?          @unique @map("reversal_of_id") @db.Uuid
+  /// 冪等鍵：網路重送同一個請求不會重複扣堂
+  idempotencyKey String?          @map("idempotency_key")
+  actorId        String?          @map("actor_id") @db.Uuid
+  createdAt      DateTime         @default(now()) @map("created_at")
+
+  package PatientPackage @relation(fields: [packageId], references: [id])
+
+  @@unique([clinicId, idempotencyKey])
+  @@index([clinicId, packageId])
+  @@index([clinicId, patientId, createdAt(sort: Desc)])
+  @@map("package_usage")
+}
+
+/// 領藥紀錄。處方內容以 HIS 為準，這裡只記錄領取狀況與下次可領日。
+model MedicationDispense {
+  clinicId       String    @default(dbgenerated("(NULLIF(current_setting('app.clinic_id'::text, true), ''::text))::uuid")) @map("clinic_id") @db.Uuid
+  id             String    @id @default(uuid(7)) @db.Uuid
+  patientId      String    @map("patient_id") @db.Uuid
+  visitId        String?   @map("visit_id") @db.Uuid
+  /// 藥品或處方名稱（例如「科學中藥 7 日份」）
+  name           String
+  days           Int
+  dispensedOn    DateTime  @map("dispensed_on") @db.Date
+  nextEligibleOn DateTime  @map("next_eligible_on") @db.Date
+  hisRxNo        String?   @map("his_rx_no")
+  note           String?
+  createdById    String?   @map("created_by_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at")
+  voidedAt       DateTime? @map("voided_at")
+  voidedById     String?   @map("voided_by_id") @db.Uuid
+  voidReason     String?   @map("void_reason")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([clinicId, patientId, dispensedOn(sort: Desc)])
+  @@map("medication_dispense")
 }

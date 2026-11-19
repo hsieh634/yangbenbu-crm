@@ -6,6 +6,7 @@ export const DEMO_PASSWORD = 'Demo1234!';
 export const ACCOUNTS = {
   admin: 'admin@yangbenbu.demo',
   doctor: 'doctor@yangbenbu.demo',
+  doctor2: 'doctor2@yangbenbu.demo',
   frontDesk: 'frontdesk@yangbenbu.demo',
   assistant: 'assistant@yangbenbu.demo',
   health: 'health@yangbenbu.demo',
@@ -42,4 +43,36 @@ export const db = new PrismaClient();
 
 export async function clinicIdBySlug(slug: string): Promise<string> {
   return (await db.clinic.findUniqueOrThrow({ where: { slug } })).id;
+}
+
+type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
+
+/** 以某個登入身分呼叫 API；回傳狀態碼與 JSON */
+export function as(app: NestFastifyApplication, cookie: string) {
+  // 測試中直接讀取回應欄位，以 any 省去每個斷言的型別轉換
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return async <T = any>(
+    method: Method,
+    url: string,
+    payload?: unknown,
+    headers: Record<string, string> = {},
+  ): Promise<{ status: number; body: T }> => {
+    const res = await app.inject({
+      method,
+      url: `/api/v1${url}`,
+      headers: { cookie, ...headers },
+      payload: payload as never,
+    });
+    return { status: res.statusCode, body: (res.body ? res.json() : undefined) as T };
+  };
+}
+
+export type Caller = ReturnType<typeof as>;
+
+/** 找出 baseDate 之後第一個指定星期幾的日期（0 = 星期日） */
+export function nextWeekday(baseDate: string, weekday: number, minDaysAhead = 2): string {
+  const d = new Date(`${baseDate}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + minDaysAhead);
+  while (d.getUTCDay() !== weekday) d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
 }

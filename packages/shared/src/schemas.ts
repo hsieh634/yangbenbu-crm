@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isIsoDate } from './time';
 import { ROLES } from './roles';
 
 export const roleSchema = z.enum(ROLES);
@@ -35,39 +36,29 @@ export const paginationSchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });
 
+// ── 共用欄位 ───────────────────────────────────────────
+export const isoDateSchema = z.string().refine(isIsoDate, '日期格式應為 YYYY-MM-DD');
+export const uuidSchema = z.uuid('格式不正確');
+
+/** 選填文字：空字串視為 null（清除），未提供（undefined）代表不修改 */
+export const optionalText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max, `最多 ${max} 個字`)
+    .transform((v) => (v === '' ? null : v))
+    .nullish();
+
+export interface StaffRef {
+  id: string;
+  name: string;
+}
+
 export interface Paginated<T> {
   items: T[];
   page: number;
   pageSize: number;
   total: number;
-}
-
-// ── 病患 ───────────────────────────────────────────────
-export const patientListQuerySchema = paginationSchema.extend({
-  q: z.string().trim().max(50).optional(),
-});
-export type PatientListQuery = z.infer<typeof patientListQuerySchema>;
-
-export const GENDERS = ['MALE', 'FEMALE', 'OTHER'] as const;
-
-export interface PatientSummary {
-  id: string;
-  chartNo: string;
-  name: string;
-  gender: (typeof GENDERS)[number];
-  birthDate: string;
-  phone: string;
-  /** 一律遮罩，完整號碼需呼叫 reveal API（會寫入稽核紀錄） */
-  nationalIdMasked: string | null;
-  tags: string[];
-}
-
-export interface PatientDetail extends PatientSummary {
-  /** 沒有 patient:read_medical 權限時為 null */
-  allergies: string | null;
-  medicalHistory: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
 // ── 稽核 ───────────────────────────────────────────────

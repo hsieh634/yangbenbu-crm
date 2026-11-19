@@ -28,7 +28,8 @@ async function main() {
   await boss.start();
 
   const ctx: JobContext = { boss, prisma, log };
-  for (const job of JOBS) {
+  const jobs = JOBS.filter((j) => j.enabled?.() ?? true);
+  for (const job of jobs) {
     await boss.createQueue(job.name);
     await boss.work(job.name, async () => {
       const started = Date.now();
@@ -37,13 +38,17 @@ async function main() {
     });
     if (job.cron) await boss.schedule(job.name, job.cron, undefined, { tz: 'Asia/Taipei' });
   }
-  log('Worker 啟動', { jobs: JOBS.map((j) => j.name) });
+  // 停用的排程工作要從 pg-boss 移除，否則之前註冊過的排程仍會觸發
+  for (const job of JOBS.filter((j) => !jobs.includes(j) && j.cron)) {
+    await boss.unschedule(job.name).catch(() => {});
+  }
+  log('Worker 啟動', { jobs: jobs.map((j) => j.name) });
 
   // 開發時可用 `pnpm --filter @yangbenbu/worker dev -- --run-now <job>` 立即執行一次
   const runNow = process.argv.indexOf('--run-now');
   if (runNow !== -1) {
     const name = process.argv[runNow + 1];
-    const job = JOBS.find((j) => j.name === name);
+    const job = jobs.find((j) => j.name === name);
     if (!job) throw new Error(`找不到工作 ${name}`);
     await boss.send(job.name, {});
   }

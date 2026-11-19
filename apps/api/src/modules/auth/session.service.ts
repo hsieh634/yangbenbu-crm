@@ -69,6 +69,20 @@ export class SessionService {
     return session;
   }
 
+  /**
+   * 不更新最後活動時間的檢查，給長連線（看板即時同步）定期確認 Session 仍有效。
+   * 開著看板不會讓 Session 永不逾時：只有實際的 API 呼叫才算活動。
+   */
+  async isActive(id: string): Promise<boolean> {
+    const s = await this.prisma.session.findUnique({ where: { id } });
+    if (!s || s.revokedAt || s.mfaPending) return false;
+    const now = Date.now();
+    return (
+      s.expiresAt.getTime() > now &&
+      now - s.lastSeenAt.getTime() <= env().SESSION_IDLE_MINUTES * 60_000
+    );
+  }
+
   async revoke(id: string): Promise<void> {
     await this.prisma.session.updateMany({
       where: { id, revokedAt: null },

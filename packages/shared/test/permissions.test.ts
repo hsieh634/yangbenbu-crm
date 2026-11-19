@@ -26,3 +26,23 @@ describe('角色權限對照', () => {
     expect(allowed).toEqual(['DOCTOR']);
   });
 });
+
+describe('Phase 1 欄位權限', () => {
+  it('病史只有管理者與醫師能編輯，但所有角色都能檢視', () => {
+    expect(ROLES.filter((r) => hasPermission(r, 'patient:write_medical')).sort()).toEqual([
+      'ADMIN',
+      'DOCTOR',
+    ]);
+    for (const role of ROLES) expect(hasPermission(role, 'patient:read_medical')).toBe(true);
+  });
+
+  it('健康管理師看不到地址與緊急聯絡人', () => {
+    expect(hasPermission('HEALTH_MANAGER', 'patient:read_contact')).toBe(false);
+    expect(hasPermission('FRONT_DESK', 'patient:read_contact')).toBe(true);
+  });
+
+  it('櫃檯可以扣堂但看不到醫師欄位', () => {
+    expect(hasPermission('FRONT_DESK', 'package:deduct')).toBe(true);
+    expect(hasPermission('FRONT_DESK', 'visit:read')).toBe(false);
+  });
+});

@@ -23,8 +23,17 @@ describe('資料庫層：Row-Level Security', () => {
   });
 
   it('指定診所後只看得到該診所的病患', async () => {
-    expect(await withTenant(db, yangbenId, (tx) => tx.patient.count())).toBe(36);
-    expect(await withTenant(db, qingheId, (tx) => tx.patient.count())).toBe(12);
+    // 其他測試檔可能新增病患，所以不比對確切筆數，而是確認每一筆都屬於該診所
+    const yangben = await withTenant(db, yangbenId, (tx) =>
+      tx.patient.findMany({ select: { clinicId: true } }),
+    );
+    const qinghe = await withTenant(db, qingheId, (tx) =>
+      tx.patient.findMany({ select: { clinicId: true } }),
+    );
+    expect(yangben.length).toBeGreaterThanOrEqual(80);
+    expect(qinghe.length).toBeGreaterThanOrEqual(20);
+    expect(yangben.every((p) => p.clinicId === yangbenId)).toBe(true);
+    expect(qinghe.every((p) => p.clinicId === qingheId)).toBe(true);
   });
 
   it('不能把資料寫進其他診所', async () => {
@@ -69,7 +78,16 @@ describe('API 層：租戶隔離', () => {
       headers: { cookie },
     });
     expect(res.statusCode).toBe(200);
-    expect(res.json().total).toBe(36);
+    const own = await withTenant(db, yangbenId, (tx) =>
+      tx.patient.count({ where: { deletedAt: null } }),
+    );
+    expect(res.json().total).toBe(own);
+    const ids = new Set(
+      (await withTenant(db, qingheId, (tx) => tx.patient.findMany({ select: { id: true } }))).map(
+        (p) => p.id,
+      ),
+    );
+    expect(res.json().items.some((p: { id: string }) => ids.has(p.id))).toBe(false);
   });
 
   it('知道其他診所病患的 ID 也查不到（回應與不存在相同）', async () => {
@@ -97,7 +115,7 @@ describe('API 層：租戶隔離', () => {
       url: '/api/v1/patients?pageSize=100',
       headers: { cookie },
     });
-    // 12 位示範病患 + 上面 RLS 測試建立的 1 位
-    expect(res.json().total).toBe(13);
+    // 20 位示範病患 + 上面 RLS 測試建立的 1 位
+    expect(res.json().total).toBe(21);
   });
 });

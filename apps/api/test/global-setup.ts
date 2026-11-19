@@ -32,7 +32,8 @@ export default async function setup(project: TestProject) {
   await maintenance.$executeRawUnsafe(`CREATE DATABASE "${dbName}"`);
 
   const dbDir = resolve(__dirname, '../../../packages/db');
-  const env = { ...process.env, DATABASE_URL: testUrl.toString() };
+  // minimal：不產生依執行時間而定的示範預約，測試結果穩定
+  const env = { ...process.env, DATABASE_URL: testUrl.toString(), SEED_MODE: 'minimal' };
   execSync('pnpm exec prisma migrate deploy', { cwd: dbDir, env, stdio: 'pipe' });
   execSync('pnpm exec tsx prisma/seed.ts', { cwd: dbDir, env, stdio: 'pipe' });
 

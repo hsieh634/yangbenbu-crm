@@ -21,6 +21,16 @@ import { AuditService } from '../audit/audit.service';
 import { SessionService } from './session.service';
 import { generateTotpSecret, totpUri, verifyTotp } from './totp';
 
+/** 公開示範站共用示範帳號：替帳號啟用兩步驟驗證會讓其他訪客無法登入 */
+function assertNotDemo(): void {
+  if (env().DEMO_MODE) {
+    throw new ForbiddenException({
+      code: 'DEMO_RESTRICTED',
+      message: '示範站的帳號由所有訪客共用，不開放啟用兩步驟驗證',
+    });
+  }
+}
+
 /** 連續失敗幾次後鎖定，鎖定多久 */
 export const MAX_FAILED_ATTEMPTS = 5;
 export const LOCKOUT_MINUTES = 15;
@@ -255,6 +265,7 @@ export class AuthService {
 
   /** 產生新的 TOTP 金鑰（尚未啟用，需以 enableMfa 驗證一次才生效） */
   async setupMfa(auth: AuthContext): Promise<{ secret: string; otpauthUri: string }> {
+    assertNotDemo();
     const staff = await this.prisma.staff.findUniqueOrThrow({ where: { id: auth.staffId } });
     if (staff.totpEnabled) {
       throw new ConflictException({ code: 'MFA_ALREADY_ENABLED', message: '已啟用兩步驟驗證' });
@@ -268,6 +279,7 @@ export class AuthService {
   }
 
   async enableMfa(auth: AuthContext, code: string, meta: RequestMeta): Promise<void> {
+    assertNotDemo();
     const staff = await this.prisma.staff.findUniqueOrThrow({ where: { id: auth.staffId } });
     if (staff.totpEnabled) {
       throw new ConflictException({ code: 'MFA_ALREADY_ENABLED', message: '已啟用兩步驟驗證' });

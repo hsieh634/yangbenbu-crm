@@ -10,8 +10,13 @@ import { env } from './config/env';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthController } from './modules/health/health.controller';
+import { ClinicModule } from './modules/clinic/clinic.module';
+import { MedicationsModule } from './modules/medications/medications.module';
+import { PackagesModule } from './modules/packages/packages.module';
 import { PatientsModule } from './modules/patients/patients.module';
+import { SchedulingModule } from './modules/scheduling/scheduling.module';
 import { StaffModule } from './modules/staff/staff.module';
+import { VisitsModule } from './modules/visits/visits.module';
 
 @Module({
   imports: [
@@ -42,7 +47,12 @@ import { StaffModule } from './modules/staff/staff.module';
     PrismaModule,
     AuditModule,
     AuthModule,
+    ClinicModule,
     PatientsModule,
+    PackagesModule,
+    SchedulingModule,
+    VisitsModule,
+    MedicationsModule,
     StaffModule,
   ],
   controllers: [HealthController],
